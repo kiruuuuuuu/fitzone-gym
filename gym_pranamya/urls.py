@@ -21,10 +21,8 @@ from django.conf.urls.static import static
 from staff.admin_views import AdminDashboardView
 
 urlpatterns = [
-    path('admin/', include([
-        path('', AdminDashboardView.as_view(), name='custom_admin'),
-        path('django/', admin.site.urls),  # Keep Django admin accessible
-    ])),
+    path('admin/', AdminDashboardView.as_view(), name='custom_admin'),
+    path('django-admin/', admin.site.urls),  # Keep Django admin accessible at /django-admin/
     path('', include('core.urls')),
     path('bookings/', include('bookings.urls')),
     path('workouts/', include('workouts.urls')),

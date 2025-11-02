@@ -16,7 +16,8 @@ class AdminDashboardView(TemplateView):
     
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return self.handle_no_permission()
+            from django.contrib.auth.views import redirect_to_login
+            return redirect_to_login(request.get_full_path())
         if not request.user.is_staff:
             raise PermissionDenied("You do not have permission to access this page.")
         return super().dispatch(request, *args, **kwargs)
