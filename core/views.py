@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Sum
@@ -121,3 +121,10 @@ def qr_code(request):
         'qr_data': qr_data,
     }
     return render(request, 'core/qr_code.html', context)
+
+
+def custom_logout(request):
+    """Custom logout view that accepts GET requests"""
+    logout(request)
+    messages.success(request, 'You have been successfully logged out.')
+    return redirect('home')
