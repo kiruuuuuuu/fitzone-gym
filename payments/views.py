@@ -44,7 +44,7 @@ def create_checkout_session(request, plan_id):
             customer=request.user.stripe_customer_id,
             payment_method_types=['card'],
             line_items=[{
-                'price': plan.stripe_price_id or 'price_test',
+                'price': plan.stripe_price_id,
                 'quantity': 1,
             }],
             mode='subscription',

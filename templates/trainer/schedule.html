@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Trainer Schedule{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold">My Schedule</h1>
+        <p class="text-gray-600">Welcome, {{ trainer.user.get_full_name }}!</p>
+    </div>
+
+    {% if upcoming_classes %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for class in upcoming_classes %}
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-xl font-bold mb-2">{{ class.name }}</h3>
+            <p class="text-gray-600 mb-4">{{ class.description|truncatewords:20 }}</p>
+            <div class="space-y-2 mb-4">
+                <p class="text-sm"><span class="font-semibold">Days:</span> {{ class.schedule_days|title }}</p>
+                <p class="text-sm"><span class="font-semibold">Time:</span> {{ class.schedule_time|time:"H:i" }}</p>
+                <p class="text-sm"><span class="font-semibold">Duration:</span> {{ class.duration }} min</p>
+                <p class="text-sm"><span class="font-semibold">Bookings:</span> {{ class.bookings_count }}/{{ class.max_capacity }}</p>
+            </div>
+            <a href="{% url 'trainer:class_roster' class.id %}" 
+               class="block w-full bg-blue-600 text-white text-center py-2 rounded-lg hover:bg-blue-700 transition">
+                View Roster
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-lg shadow-md p-12 text-center">
+        <p class="text-gray-500 text-lg">No upcoming classes assigned</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

@@ -3,7 +3,7 @@ import io
 import base64
 from datetime import datetime, timedelta
 from django.utils import timezone
-from .models import QRCodeSession
+from .models import QRCodeSession, UserPoints, UserStreak
 
 
 def generate_qr_code(user):
@@ -49,4 +49,56 @@ def generate_qr_code(user):
         'session_token': session_token,
         'expires_at': expires_at,
     }
+
+
+def award_points_and_update_streak(user, points, source='workout', description=''):
+    """Award points to a user and update their streak"""
+    # Award points
+    UserPoints.objects.create(
+        user=user,
+        points=points,
+        source=source,
+        description=description
+    )
+    
+    # Update streak
+    update_user_streak(user)
+
+
+def update_user_streak(user):
+    """Update user's streak based on last activity"""
+    today = timezone.now().date()
+    
+    # Get or create streak object
+    streak, created = UserStreak.objects.get_or_create(
+        user=user,
+        defaults={
+            'current_streak': 1,
+            'longest_streak': 1,
+            'last_activity_date': today
+        }
+    )
+    
+    if created:
+        return
+    
+    # Check if activity was today
+    if streak.last_activity_date == today:
+        # Already updated today, don't change
+        return
+    
+    # Check if activity was yesterday (consecutive day)
+    yesterday = today - timedelta(days=1)
+    if streak.last_activity_date == yesterday:
+        # Increment streak
+        streak.current_streak += 1
+        if streak.current_streak > streak.longest_streak:
+            streak.longest_streak = streak.current_streak
+    else:
+        # Streak broken, reset to 1
+        streak.current_streak = 1
+    
+    # Update last activity date
+    streak.last_activity_date = today
+    streak.save()
 

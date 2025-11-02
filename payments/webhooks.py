@@ -29,8 +29,15 @@ def handle_checkout_session_completed(session):
                     'current_period_end': datetime.fromtimestamp(stripe_subscription['current_period_end'], tz=timezone.utc),
                 }
             )
+    except CustomUser.DoesNotExist:
+        print(f"Webhook Error: User {user_id} not found.")
+        raise  # Re-raise the exception to trigger a non-200 response
+    except MembershipPlan.DoesNotExist:
+        print(f"Webhook Error: Plan {plan_id} not found.")
+        raise
     except Exception as e:
-        print(f"Error handling checkout session completed: {e}")
+        print(f"Generic webhook error: {e}")
+        raise
 
 
 def handle_subscription_updated(subscription_obj):
@@ -44,9 +51,12 @@ def handle_subscription_updated(subscription_obj):
         subscription.current_period_end = datetime.fromtimestamp(subscription_obj['current_period_end'], tz=timezone.utc)
         subscription.save()
     except Subscription.DoesNotExist:
+        print(f"Webhook Error: Subscription {subscription_id} not found.")
+        # For updates, don't raise - subscription might have been deleted
         pass
     except Exception as e:
         print(f"Error handling subscription updated: {e}")
+        raise
 
 
 def handle_subscription_deleted(subscription_obj):
@@ -58,7 +68,10 @@ def handle_subscription_deleted(subscription_obj):
         subscription.status = 'cancelled'
         subscription.save()
     except Subscription.DoesNotExist:
+        print(f"Webhook Error: Subscription {subscription_id} not found.")
+        # For deletions, don't raise - subscription might have already been deleted
         pass
     except Exception as e:
         print(f"Error handling subscription deleted: {e}")
+        raise
 

@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
+from django.db import transaction
 from datetime import datetime, timedelta
 from .models import GymClass, Booking
 from .forms import BookingForm
@@ -17,39 +18,41 @@ def book_class(request):
         booking_date = request.POST.get('booking_date')
         
         try:
-            gym_class = GymClass.objects.get(id=class_id, is_active=True)
-            
-            # Check capacity
-            existing_bookings = Booking.objects.filter(
-                gym_class=gym_class,
-                booking_date=booking_date,
-                status='confirmed'
-            ).count()
-            
-            if existing_bookings >= gym_class.max_capacity:
-                messages.error(request, 'This class is fully booked for the selected date.')
-                return redirect('bookings:book_class')
-            
-            # Check if user already booked this class on this date
-            existing_booking = Booking.objects.filter(
-                user=request.user,
-                gym_class=gym_class,
-                booking_date=booking_date,
-                status='confirmed'
-            ).exists()
-            
-            if existing_booking:
-                messages.error(request, 'You have already booked this class for the selected date.')
-                return redirect('bookings:book_class')
-            
-            # Create booking
-            booking = Booking.objects.create(
-                user=request.user,
-                gym_class=gym_class,
-                booking_date=booking_date,
-                status='confirmed'
-            )
-            
+            with transaction.atomic():
+                # Lock the GymClass row until this transaction is done
+                gym_class = GymClass.objects.select_for_update().get(id=class_id, is_active=True)
+
+                # Re-check capacity *inside* the transaction
+                existing_bookings = Booking.objects.filter(
+                    gym_class=gym_class,
+                    booking_date=booking_date,
+                    status='confirmed'
+                ).count()
+
+                if existing_bookings >= gym_class.max_capacity:
+                    messages.error(request, 'This class is fully booked for the selected date.')
+                    return redirect('bookings:book_class')
+
+                # Check if user already booked this class on this date
+                existing_booking = Booking.objects.filter(
+                    user=request.user,
+                    gym_class=gym_class,
+                    booking_date=booking_date,
+                    status='confirmed'
+                ).exists()
+
+                if existing_booking:
+                    messages.error(request, 'You have already booked this class for the selected date.')
+                    return redirect('bookings:book_class')
+
+                # Create booking
+                booking = Booking.objects.create(
+                    user=request.user,
+                    gym_class=gym_class,
+                    booking_date=booking_date,
+                    status='confirmed'
+                )
+
             messages.success(request, f'Successfully booked {gym_class.name}!')
             return redirect('bookings:my_bookings')
             

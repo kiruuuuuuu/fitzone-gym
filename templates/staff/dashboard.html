@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Staff Dashboard - FitZone{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold">Staff Dashboard</h1>
+        <p class="text-gray-600">Welcome back, {{ user.get_full_name }}!</p>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-gray-600 text-sm font-semibold">Total Members</h3>
+            <p class="text-3xl font-bold text-blue-600">{{ total_members }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-gray-600 text-sm font-semibold">Active Subscriptions</h3>
+            <p class="text-3xl font-bold text-green-600">{{ active_subscriptions }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-gray-600 text-sm font-semibold">Monthly Revenue</h3>
+            <p class="text-3xl font-bold text-purple-600">${{ total_mrr|floatformat:0 }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-gray-600 text-sm font-semibold">New Members (7d)</h3>
+            <p class="text-3xl font-bold text-orange-600">{{ new_members_7d }}</p>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Recent Subscriptions -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold mb-4">Recent Subscriptions</h2>
+            <div class="space-y-3">
+                {% for subscription in recent_subscriptions %}
+                <div class="flex justify-between items-center border-b pb-3">
+                    <div>
+                        <p class="font-semibold">{{ subscription.user.get_full_name }}</p>
+                        <p class="text-sm text-gray-600">{{ subscription.plan.name }}</p>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold {% if subscription.status == 'active' %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {{ subscription.status }}
+                    </span>
+                </div>
+                {% empty %}
+                <p class="text-gray-500">No recent subscriptions</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold mb-4">Quick Actions</h2>
+            <div class="space-y-3">
+                <a href="{% url 'staff:member_list' %}" class="block w-full bg-blue-600 text-white text-center py-3 rounded-lg hover:bg-blue-700 transition">
+                    View All Members
+                </a>
+                <a href="{% url 'staff:plan_create' %}" class="block w-full bg-green-600 text-white text-center py-3 rounded-lg hover:bg-green-700 transition">
+                    Create Membership Plan
+                </a>
+                <a href="{% url 'staff:class_create' %}" class="block w-full bg-purple-600 text-white text-center py-3 rounded-lg hover:bg-purple-700 transition">
+                    Create New Class
+                </a>
+                <a href="{% url 'staff:checkin' %}" class="block w-full bg-orange-600 text-white text-center py-3 rounded-lg hover:bg-orange-700 transition">
+                    Member Check-in
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Members -->
+    <div class="mt-8 bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-bold mb-4">Recent Members</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for member in recent_members %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">{{ member.get_full_name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">{{ member.email }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">{{ member.created_at|date:"M d, Y" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <a href="{% url 'staff:member_detail' member.id %}" class="text-blue-600 hover:text-blue-800">
+                                View
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="px-6 py-4 text-center text-gray-500">No recent members</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

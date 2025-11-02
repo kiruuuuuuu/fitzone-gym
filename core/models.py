@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.core.exceptions import ValidationError
 
 
 class CustomUser(AbstractUser):
@@ -29,6 +30,16 @@ class MembershipPlan(models.Model):
     
     def __str__(self):
         return self.name
+    
+    def clean(self):
+        """Validate that active plans have Stripe Price ID"""
+        if self.is_active and not self.stripe_price_id:
+            raise ValidationError({'stripe_price_id': 'An active plan must have a Stripe Price ID.'})
+    
+    def save(self, *args, **kwargs):
+        """Call full_clean before saving to enforce validation"""
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 class Subscription(models.Model):

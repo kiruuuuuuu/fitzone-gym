@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from .models import Workout, UserWorkoutCompletion
+from core.utils import award_points_and_update_streak
 
 
 def library(request):
@@ -57,10 +58,19 @@ def mark_completed(request, workout_id):
     workout = get_object_or_404(Workout, id=workout_id)
     
     # Create completion record
-    UserWorkoutCompletion.objects.get_or_create(
+    created = UserWorkoutCompletion.objects.get_or_create(
         user=request.user,
         workout=workout
-    )
+    )[1]
+    
+    # Award points and update streak if not already completed
+    if created:
+        award_points_and_update_streak(
+            request.user,
+            points=10,
+            source='workout',
+            description=f'Completed {workout.title}'
+        )
     
     messages.success(request, f'Congratulations! You completed {workout.title}.')
     return redirect('workouts:workout_detail', workout_id=workout_id)
