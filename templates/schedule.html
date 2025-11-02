@@ -5,38 +5,30 @@
 {% block content %}
 <div class="bg-white py-16">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 class="text-4xl font-bold text-center mb-4">Class Schedule</h1>
+        <h1 class="text-4xl font-bold text-center mb-4 flex items-center justify-center"><i class="fas fa-calendar-alt mr-3 text-blue-600"></i>Class Schedule</h1>
         <p class="text-center text-gray-600 mb-12">View our weekly class schedule</p>
         
         {% if classes %}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for class in classes %}
-            <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition">
-                <h3 class="text-xl font-bold mb-2">{{ class.name }}</h3>
+            <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition bg-white">
+                <h3 class="text-xl font-bold mb-2 text-blue-900">{{ class.name }}</h3>
                 <p class="text-gray-600 mb-4">{{ class.description|truncatewords:20 }}</p>
                 <div class="space-y-2 text-sm">
                     <div class="flex items-center">
-                        <svg class="w-4 h-4 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        <i class="fas fa-clock text-blue-600 w-4 mr-2"></i>
                         <span>{{ class.schedule_time|time:"g:i A" }}</span>
                     </div>
                     <div class="flex items-center">
-                        <svg class="w-4 h-4 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                        </svg>
+                        <i class="fas fa-calendar-week text-green-600 w-4 mr-2"></i>
                         <span>{{ class.schedule_days }}</span>
                     </div>
                     <div class="flex items-center">
-                        <svg class="w-4 h-4 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
+                        <i class="fas fa-user-tie text-purple-600 w-4 mr-2"></i>
                         <span>{{ class.trainer.user.get_full_name|default:class.trainer.user.username }}</span>
                     </div>
                     <div class="flex items-center">
-                        <svg class="w-4 h-4 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        <i class="fas fa-hourglass-half text-orange-600 w-4 mr-2"></i>
                         <span>{{ class.duration }} minutes</span>
                     </div>
                 </div>
