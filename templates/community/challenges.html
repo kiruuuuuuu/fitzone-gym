@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Community Challenges - FitZone Gym{% endblock %}
+
+{% block content %}
+<div class="bg-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-4xl font-bold mb-8">Community Challenges</h1>
+        
+        {% if challenges %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for challenge in challenges %}
+            <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition">
+                <h3 class="text-xl font-bold mb-2">{{ challenge.name }}</h3>
+                <p class="text-gray-600 mb-4">{{ challenge.description|truncatewords:20 }}</p>
+                <div class="space-y-2 text-sm mb-4">
+                    <p><strong>Goal:</strong> {{ challenge.get_goal_type_display }}</p>
+                    {% if challenge.goal_value %}
+                        <p><strong>Target:</strong> {{ challenge.goal_value }}</p>
+                    {% endif %}
+                    <p><strong>Start:</strong> {{ challenge.start_date|date:"M d, Y" }}</p>
+                    <p><strong>End:</strong> {{ challenge.end_date|date:"M d, Y" }}</p>
+                    <p>
+                        <span class="px-2 py-1 {% if challenge.is_active %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %} rounded">
+                            {% if challenge.is_active %}Active{% else %}Ended{% endif %}
+                        </span>
+                    </p>
+                </div>
+                <a href="{% url 'community:challenge_detail' challenge.id %}" class="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition">View Details</a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-center text-gray-600">No challenges available at this time.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

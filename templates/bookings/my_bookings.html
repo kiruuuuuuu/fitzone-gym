@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}My Bookings - FitZone Gym{% endblock %}
+
+{% block content %}
+<div class="bg-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-4xl font-bold mb-8">My Bookings</h1>
+        
+        <h2 class="text-2xl font-semibold mb-4">Upcoming Bookings</h2>
+        {% if upcoming %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                {% for booking in upcoming %}
+                <div class="border border-gray-200 rounded-lg p-6">
+                    <h3 class="text-xl font-bold mb-2">{{ booking.gym_class.name }}</h3>
+                    <p class="text-gray-600 mb-2">{{ booking.booking_date|date:"F d, Y" }} at {{ booking.gym_class.schedule_time|time:"g:i A" }}</p>
+                    {% if booking.gym_class.trainer %}
+                        <p class="text-sm text-gray-500">Trainer: {{ booking.gym_class.trainer.user.get_full_name|default:booking.gym_class.trainer.user.username }}</p>
+                    {% endif %}
+                    <a href="{% url 'bookings:cancel_booking' booking.id %}" class="mt-4 inline-block bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition" onclick="return confirm('Are you sure you want to cancel this booking?')">Cancel</a>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-gray-600 mb-8">No upcoming bookings. <a href="{% url 'bookings:book_class' %}" class="text-blue-600 hover:underline">Book a class</a></p>
+        {% endif %}
+        
+        <h2 class="text-2xl font-semibold mb-4">Past Bookings</h2>
+        {% if past %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for booking in past %}
+                <div class="border border-gray-200 rounded-lg p-6 bg-gray-50">
+                    <h3 class="text-xl font-bold mb-2">{{ booking.gym_class.name }}</h3>
+                    <p class="text-gray-600 mb-2">{{ booking.booking_date|date:"F d, Y" }}</p>
+                    <p class="text-sm">
+                        <span class="px-2 py-1 bg-gray-200 rounded">{{ booking.status|capfirst }}</span>
+                    </p>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-gray-600">No past bookings.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

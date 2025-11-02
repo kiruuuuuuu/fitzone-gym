@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Book a Class - FitZone Gym{% endblock %}
+
+{% block content %}
+<div class="bg-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-4xl font-bold mb-8">Book a Class</h1>
+        
+        {% if classes %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for class in classes %}
+            <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition">
+                <h3 class="text-xl font-bold mb-2">{{ class.name }}</h3>
+                <p class="text-gray-600 mb-4">{{ class.description|truncatewords:20 }}</p>
+                <div class="space-y-2 text-sm mb-4">
+                    <p><strong>Time:</strong> {{ class.schedule_time|time:"g:i A" }}</p>
+                    <p><strong>Days:</strong> {{ class.schedule_days }}</p>
+                    <p><strong>Duration:</strong> {{ class.duration }} minutes</p>
+                    <p><strong>Available Spots:</strong> {{ class.available_spots }}/{{ class.max_capacity }}</p>
+                    {% if class.trainer %}
+                        <p><strong>Trainer:</strong> {{ class.trainer.user.get_full_name|default:class.trainer.user.username }}</p>
+                    {% endif %}
+                </div>
+                <form method="post" action="{% url 'bookings:book_class' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="class_id" value="{{ class.id }}">
+                    <label class="block mb-2">
+                        <span class="text-sm font-medium text-gray-700">Select Date:</span>
+                        <input type="date" name="booking_date" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                    </label>
+                    <button type="submit" class="mt-4 w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">Book Class</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-center text-gray-600">No classes available at this time.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

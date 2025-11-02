@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}QR Code - FitZone Gym{% endblock %}
+
+{% block content %}
+<div class="bg-white py-16">
+    <div class="max-w-md mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h1 class="text-3xl font-bold mb-4">Your QR Code</h1>
+        <p class="text-gray-600 mb-6">Show this QR code at the gym entrance for check-in</p>
+        
+        {% if qr_data %}
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <img src="{{ qr_data.qr_image }}" alt="QR Code" class="mx-auto max-w-full">
+            <p class="text-sm text-gray-600 mt-4">Code refreshes every 30 seconds</p>
+        </div>
+        
+        <a href="{% url 'qr_code' %}" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition inline-block">Refresh QR Code</a>
+        {% else %}
+        <p class="text-red-600">Error generating QR code. Please try again.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Auto-refresh QR code every 30 seconds
+    setTimeout(function() {
+        location.reload();
+    }, 30000);
+</script>
+{% endblock %}
+
