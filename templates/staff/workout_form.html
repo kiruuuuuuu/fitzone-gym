@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ action }} Workout{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold">{{ action }} Workout</h1>
+        <p class="text-gray-600">Add or edit a workout in the library</p>
+    </div>
+
+    <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="mb-6">
+                <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
+                    Workout Title *
+                </label>
+                <input type="text" id="title" name="title" required
+                       value="{% if workout %}{{ workout.title }}{% endif %}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+            
+            <div class="mb-6">
+                <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+                    Description *
+                </label>
+                <textarea id="description" name="description" rows="4" required
+                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">{% if workout %}{{ workout.description }}{% endif %}</textarea>
+            </div>
+            
+            <div class="mb-6">
+                <label for="category" class="block text-sm font-medium text-gray-700 mb-2">
+                    Category *
+                </label>
+                <select id="category" name="category" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">-- Select Category --</option>
+                    {% for value, label in categories %}
+                    <option value="{{ value }}" {% if workout.category == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                    <label for="difficulty_level" class="block text-sm font-medium text-gray-700 mb-2">
+                        Difficulty Level *
+                    </label>
+                    <select id="difficulty_level" name="difficulty_level" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        {% for value, label in difficulties %}
+                        <option value="{{ value }}" {% if workout.difficulty_level == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="duration" class="block text-sm font-medium text-gray-700 mb-2">
+                        Duration (minutes) *
+                    </label>
+                    <input type="number" id="duration" name="duration" required min="1"
+                           value="{% if workout %}{{ workout.duration }}{% endif %}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <label for="video_url" class="block text-sm font-medium text-gray-700 mb-2">
+                    Video URL
+                </label>
+                <input type="url" id="video_url" name="video_url"
+                       value="{% if workout %}{{ workout.video_url }}{% endif %}"
+                       placeholder="https://example.com/video"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <p class="text-xs text-gray-500 mt-1">Optional: Link to workout video or demonstration</p>
+            </div>
+            
+            <div class="flex gap-4">
+                <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition">
+                    {{ action }} Workout
+                </button>
+                <a href="{% url 'staff:workout_list' %}" class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg hover:bg-gray-300 transition text-center">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

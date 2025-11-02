@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Workouts{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-8 flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold">Workout Library</h1>
+            <p class="text-gray-600">Manage workout videos and guides</p>
+        </div>
+        <a href="{% url 'staff:workout_create' %}" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+            + Create New Workout
+        </a>
+    </div>
+
+    {% if workouts %}
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Difficulty</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for workout in workouts %}
+                <tr>
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-medium text-gray-900">{{ workout.title }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                            {{ workout.get_category_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full 
+                            {% if workout.difficulty_level == 'beginner' %}bg-green-100 text-green-800
+                            {% elif workout.difficulty_level == 'intermediate' %}bg-yellow-100 text-yellow-800
+                            {% else %}bg-red-100 text-red-800
+                            {% endif %}">
+                            {{ workout.get_difficulty_level_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">{{ workout.duration }} min</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray-900">{{ workout.description|truncatewords:10 }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <a href="{% url 'staff:workout_edit' workout.id %}" class="text-blue-600 hover:text-blue-900">Edit</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="bg-white rounded-lg shadow-md p-12 text-center">
+        <p class="text-gray-500 text-lg mb-4">No workouts in library yet</p>
+        <a href="{% url 'staff:workout_create' %}" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 inline-block">
+            Add Your First Workout
+        </a>
+    </div>
+    {% endif %}
+
+    <div class="mt-8">
+        <a href="{% url 'staff:dashboard' %}" class="text-blue-600 hover:text-blue-800">
+            ← Back to Staff Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}
+
