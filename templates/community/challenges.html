@@ -5,7 +5,7 @@
 {% block content %}
 <div class="bg-white py-16">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 class="text-4xl font-bold mb-8">Community Challenges</h1>
+        <h1 class="text-4xl font-bold mb-8 flex items-center"><i class="fas fa-trophy mr-3 text-blue-600"></i>Community Challenges</h1>
         
         {% if challenges %}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -26,7 +26,7 @@
                         </span>
                     </p>
                 </div>
-                <a href="{% url 'community:challenge_detail' challenge.id %}" class="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition">View Details</a>
+                <a href="{% url 'community:challenge_detail' challenge.id %}" class="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition"><i class="fas fa-eye mr-2"></i>View Details</a>
             </div>
             {% endfor %}
         </div>

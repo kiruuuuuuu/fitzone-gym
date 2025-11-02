@@ -5,7 +5,7 @@
 {% block content %}
 <div class="bg-white py-16">
     <div class="max-w-md mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h1 class="text-3xl font-bold mb-4">Your QR Code</h1>
+        <h1 class="text-3xl font-bold mb-4 flex items-center justify-center"><i class="fas fa-qrcode mr-3 text-blue-600"></i>Your QR Code</h1>
         <p class="text-gray-600 mb-6">Show this QR code at the gym entrance for check-in</p>
         
         {% if qr_data %}
@@ -14,7 +14,7 @@
             <p class="text-sm text-gray-600 mt-4">Code refreshes every 30 seconds</p>
         </div>
         
-        <a href="{% url 'qr_code' %}" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition inline-block">Refresh QR Code</a>
+        <a href="{% url 'qr_code' %}" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition inline-block"><i class="fas fa-sync mr-2"></i>Refresh QR Code</a>
         {% else %}
         <p class="text-red-600">Error generating QR code. Please try again.</p>
         {% endif %}

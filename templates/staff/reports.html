@@ -39,27 +39,27 @@
     <!-- Charts Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <!-- Member Growth Chart -->
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-bold mb-4">Member Growth (Last 12 Months)</h2>
+        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+            <h2 class="text-xl font-bold mb-4 flex items-center"><i class="fas fa-chart-line mr-2 text-blue-600"></i>Member Growth (Last 12 Months)</h2>
             <canvas id="memberGrowthChart"></canvas>
         </div>
 
         <!-- Active vs Inactive Chart -->
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-bold mb-4">Member Status Distribution</h2>
+        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+            <h2 class="text-xl font-bold mb-4 flex items-center"><i class="fas fa-chart-pie mr-2 text-green-600"></i>Member Status Distribution</h2>
             <canvas id="memberStatusChart"></canvas>
         </div>
     </div>
 
     <!-- Class Popularity Chart -->
-    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 class="text-xl font-bold mb-4">Top Classes by Bookings</h2>
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8 hover:shadow-lg transition">
+        <h2 class="text-xl font-bold mb-4 flex items-center"><i class="fas fa-chart-bar mr-2 text-purple-600"></i>Top Classes by Bookings</h2>
         <canvas id="classPopularityChart"></canvas>
     </div>
 
     <!-- Trainer Performance Chart -->
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-xl font-bold mb-4">Trainer Performance (Attendance)</h2>
+    <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+        <h2 class="text-xl font-bold mb-4 flex items-center"><i class="fas fa-user-tie mr-2 text-orange-600"></i>Trainer Performance (Attendance)</h2>
         <canvas id="trainerPerformanceChart"></canvas>
     </div>
 </div>

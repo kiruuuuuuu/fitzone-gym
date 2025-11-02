@@ -5,7 +5,7 @@
 {% block content %}
 <div class="bg-white py-16">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 class="text-4xl font-bold text-center mb-8">Contact Us</h1>
+        <h1 class="text-4xl font-bold text-center mb-8 flex items-center justify-center"><i class="fas fa-envelope mr-3 text-blue-600"></i>Contact Us</h1>
         <p class="text-center text-gray-600 mb-8">Have a question? We'd love to hear from you. Send us a message and we'll respond as soon as possible.</p>
         
         <form method="post" class="space-y-6">
@@ -38,7 +38,7 @@
                     <p class="mt-1 text-sm text-red-600">{{ form.message.errors }}</p>
                 {% endif %}
             </div>
-            <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">Send Message</button>
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition"><i class="fas fa-paper-plane mr-2"></i>Send Message</button>
         </form>
     </div>
 </div>
