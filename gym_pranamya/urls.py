@@ -18,9 +18,13 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from staff.admin_views import AdminDashboardView
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('admin/', include([
+        path('', AdminDashboardView.as_view(), name='custom_admin'),
+        path('django/', admin.site.urls),  # Keep Django admin accessible
+    ])),
     path('', include('core.urls')),
     path('bookings/', include('bookings.urls')),
     path('workouts/', include('workouts.urls')),

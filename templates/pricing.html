@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load currency_filters %}
 
 {% block title %}Pricing - FitZone Gym{% endblock %}
 
@@ -12,25 +13,23 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             {% for plan in plans %}
             <div class="border border-gray-200 rounded-lg p-8 hover:shadow-lg transition">
-                <h3 class="text-2xl font-bold mb-4">{{ plan.name }}</h3>
+                <h3 class="text-2xl font-bold mb-4"><i class="fas fa-ticket-alt mr-2"></i>{{ plan.name }}</h3>
                 <div class="mb-6">
-                    <span class="text-4xl font-bold">${{ plan.price }}</span>
+                    <span class="text-4xl font-bold">{{ plan.price|rupees }}</span>
                     <span class="text-gray-600">/month</span>
                 </div>
                 <ul class="space-y-3 mb-8">
                     {% for feature in plan.features.splitlines %}
                         <li class="flex items-start">
-                            <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                            </svg>
+                            <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5"></i>
                             <span class="text-gray-700">{{ feature }}</span>
                         </li>
                     {% endfor %}
                 </ul>
                 {% if user.is_authenticated %}
-                    <a href="{% url 'payments:checkout' plan.id %}" class="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition">Select Plan</a>
+                    <a href="{% url 'payments:checkout' plan.id %}" class="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition"><i class="fas fa-check mr-2"></i>Select Plan</a>
                 {% else %}
-                    <a href="{% url 'register' %}" class="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition">Sign Up</a>
+                    <a href="{% url 'register' %}" class="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition"><i class="fas fa-user-plus mr-2"></i>Sign Up</a>
                 {% endif %}
             </div>
             {% endfor %}

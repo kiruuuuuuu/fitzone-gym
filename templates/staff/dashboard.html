@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load currency_filters %}
 
 {% block title %}Staff Dashboard - FitZone{% endblock %}
 
@@ -12,21 +13,41 @@
 
     <!-- Key Metrics -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h3 class="text-gray-600 text-sm font-semibold">Total Members</h3>
-            <p class="text-3xl font-bold text-blue-600">{{ total_members }}</p>
+        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-gray-600 text-sm font-semibold"><i class="fas fa-users mr-2"></i>Total Members</h3>
+                    <p class="text-3xl font-bold text-blue-600 mt-2">{{ total_members }}</p>
+                </div>
+                <div class="text-blue-500 text-4xl opacity-20"><i class="fas fa-users"></i></div>
+            </div>
         </div>
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h3 class="text-gray-600 text-sm font-semibold">Active Subscriptions</h3>
-            <p class="text-3xl font-bold text-green-600">{{ active_subscriptions }}</p>
+        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-gray-600 text-sm font-semibold"><i class="fas fa-check-circle mr-2"></i>Active Subscriptions</h3>
+                    <p class="text-3xl font-bold text-green-600 mt-2">{{ active_subscriptions }}</p>
+                </div>
+                <div class="text-green-500 text-4xl opacity-20"><i class="fas fa-check-circle"></i></div>
+            </div>
         </div>
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h3 class="text-gray-600 text-sm font-semibold">Monthly Revenue</h3>
-            <p class="text-3xl font-bold text-purple-600">${{ total_mrr|floatformat:0 }}</p>
+        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-gray-600 text-sm font-semibold"><i class="fas fa-rupee-sign mr-2"></i>Monthly Revenue</h3>
+                    <p class="text-3xl font-bold text-purple-600 mt-2">{{ total_mrr|rupees_int }}</p>
+                </div>
+                <div class="text-purple-500 text-4xl opacity-20"><i class="fas fa-rupee-sign"></i></div>
+            </div>
         </div>
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h3 class="text-gray-600 text-sm font-semibold">New Members (7d)</h3>
-            <p class="text-3xl font-bold text-orange-600">{{ new_members_7d }}</p>
+        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-gray-600 text-sm font-semibold"><i class="fas fa-user-plus mr-2"></i>New Members (7d)</h3>
+                    <p class="text-3xl font-bold text-orange-600 mt-2">{{ new_members_7d }}</p>
+                </div>
+                <div class="text-orange-500 text-4xl opacity-20"><i class="fas fa-user-plus"></i></div>
+            </div>
         </div>
     </div>
 
@@ -57,25 +78,25 @@
             <h2 class="text-xl font-bold mb-4">Quick Actions</h2>
             <div class="space-y-3">
                 <a href="{% url 'staff:member_list' %}" class="block w-full bg-blue-600 text-white text-center py-3 rounded-lg hover:bg-blue-700 transition">
-                    View All Members
+                    <i class="fas fa-users mr-2"></i>View All Members
                 </a>
                 <a href="{% url 'staff:plan_create' %}" class="block w-full bg-green-600 text-white text-center py-3 rounded-lg hover:bg-green-700 transition">
-                    Create Membership Plan
+                    <i class="fas fa-plus-circle mr-2"></i>Create Membership Plan
                 </a>
                 <a href="{% url 'staff:class_create' %}" class="block w-full bg-purple-600 text-white text-center py-3 rounded-lg hover:bg-purple-700 transition">
-                    Create New Class
+                    <i class="fas fa-dumbbell mr-2"></i>Create New Class
                 </a>
                 <a href="{% url 'staff:trainer_create' %}" class="block w-full bg-indigo-600 text-white text-center py-3 rounded-lg hover:bg-indigo-700 transition">
-                    Create Trainer
+                    <i class="fas fa-user-tie mr-2"></i>Create Trainer
                 </a>
                 <a href="{% url 'staff:challenge_create' %}" class="block w-full bg-pink-600 text-white text-center py-3 rounded-lg hover:bg-pink-700 transition">
-                    Create Challenge
+                    <i class="fas fa-trophy mr-2"></i>Create Challenge
                 </a>
                 <a href="{% url 'staff:checkin' %}" class="block w-full bg-orange-600 text-white text-center py-3 rounded-lg hover:bg-orange-700 transition">
-                    Member Check-in
+                    <i class="fas fa-qrcode mr-2"></i>Member Check-in
                 </a>
                 <a href="{% url 'staff:reports' %}" class="block w-full bg-teal-600 text-white text-center py-3 rounded-lg hover:bg-teal-700 transition">
-                    View Reports
+                    <i class="fas fa-chart-bar mr-2"></i>View Reports
                 </a>
             </div>
         </div>
