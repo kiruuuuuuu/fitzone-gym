@@ -126,6 +126,9 @@ def member_detail(request, user_id):
     except:
         streak = None
     
+    # Get all plans for subscription management
+    all_plans = MembershipPlan.objects.filter(is_active=True).order_by('price')
+    
     context = {
         'member': member,
         'active_subscription': active_subscription,
@@ -136,9 +139,86 @@ def member_detail(request, user_id):
         'total_points': total_points,
         'recent_points': recent_points,
         'streak': streak,
+        'all_plans': all_plans,
     }
     
     return render(request, 'staff/member_detail.html', context)
+
+
+@login_required
+@require_POST
+def add_manual_points(request, user_id):
+    """Add manual points to a member"""
+    if not request.user.is_staff:
+        raise PermissionDenied("You do not have permission to access this page.")
+    
+    member = get_object_or_404(CustomUser, id=user_id, is_staff=False)
+    
+    points = request.POST.get('points')
+    description = request.POST.get('description')
+    
+    if points:
+        try:
+            points_value = int(points)
+            from core.utils import award_points_and_update_streak
+            award_points_and_update_streak(
+                member,
+                points=points_value,
+                source='class',  # Using 'class' as source for manual points
+                description=description or 'Manual bonus points'
+            )
+            messages.success(request, f'Added {points_value} points to {member.get_full_name()}')
+        except ValueError:
+            messages.error(request, 'Invalid points value')
+        except Exception as e:
+            messages.error(request, f'Error adding points: {str(e)}')
+    
+    return redirect('staff:member_detail', user_id=user_id)
+
+
+@login_required
+@require_POST
+def manage_subscription(request, user_id):
+    """Manually manage a member's subscription"""
+    if not request.user.is_staff:
+        raise PermissionDenied("You do not have permission to access this page.")
+    
+    member = get_object_or_404(CustomUser, id=user_id, is_staff=False)
+    
+    action = request.POST.get('action')
+    
+    if action == 'create':
+        plan_id = request.POST.get('plan_id')
+        if plan_id:
+            try:
+                plan = MembershipPlan.objects.get(id=plan_id)
+                Subscription.objects.create(
+                    user=member,
+                    plan=plan,
+                    status='active',
+                    current_period_start=timezone.now(),
+                    current_period_end=timezone.now() + timedelta(days=30)
+                )
+                messages.success(request, f'Active subscription created for {member.get_full_name()}')
+            except MembershipPlan.DoesNotExist:
+                messages.error(request, 'Invalid plan selected')
+            except Exception as e:
+                messages.error(request, f'Error creating subscription: {str(e)}')
+    
+    elif action == 'cancel':
+        subscription_id = request.POST.get('subscription_id')
+        if subscription_id:
+            try:
+                subscription = Subscription.objects.get(id=subscription_id, user=member)
+                subscription.status = 'cancelled'
+                subscription.save()
+                messages.success(request, f'Subscription cancelled for {member.get_full_name()}')
+            except Subscription.DoesNotExist:
+                messages.error(request, 'Invalid subscription')
+            except Exception as e:
+                messages.error(request, f'Error cancelling subscription: {str(e)}')
+    
+    return redirect('staff:member_detail', user_id=user_id)
 
 
 @method_decorator(login_required, name='dispatch')
@@ -400,6 +480,220 @@ def checkin_view(request):
                 messages.error(request, f'Error processing check-in: {str(e)}')
     
     return render(request, 'staff/checkin.html')
+
+
+# Reports Dashboard
+@login_required
+def reports_dashboard(request):
+    """Analytics and reporting dashboard"""
+    if not request.user.is_staff:
+        raise PermissionDenied("You do not have permission to access this page.")
+    
+    # MRR (Monthly Recurring Revenue)
+    active_subs = Subscription.objects.filter(status='active')
+    total_mrr = sum([sub.plan.price for sub in active_subs if sub.plan])
+    
+    # Member growth (last 12 months)
+    today = timezone.now().date()
+    member_growth = []
+    for i in range(11, -1, -1):
+        month_start = today.replace(day=1) - timedelta(days=30*i)
+        month_end = month_start.replace(day=28) + timedelta(days=10)
+        month_end = month_end.replace(day=min(28, month_end.day))
+        
+        if i > 0:
+            next_month_start = today.replace(day=1) - timedelta(days=30*(i-1))
+            month_end = next_month_start - timedelta(days=1)
+        
+        count = CustomUser.objects.filter(
+            is_staff=False,
+            created_at__date__gte=month_start,
+            created_at__date__lte=month_end
+        ).count()
+        member_growth.append({
+            'month': month_start.strftime('%b %Y'),
+            'count': count
+        })
+    
+    # Class popularity
+    class_popularity = GymClass.objects.annotate(
+        bookings_count=Count('bookings', filter=Q(bookings__status='confirmed'))
+    ).order_by('-bookings_count')[:10]
+    
+    # Trainer performance
+    trainer_performance = []
+    for trainer in Trainer.objects.all():
+        classes_taught = GymClass.objects.filter(trainer=trainer).count()
+        total_attendance = Booking.objects.filter(
+            gym_class__trainer=trainer,
+            status='completed'
+        ).count()
+        trainer_performance.append({
+            'name': trainer.user.get_full_name(),
+            'classes_taught': classes_taught,
+            'attendance': total_attendance
+        })
+    trainer_performance = sorted(trainer_performance, key=lambda x: x['attendance'], reverse=True)[:10]
+    
+    # Active vs Inactive members
+    active_members = CustomUser.objects.filter(is_staff=False, is_active=True).count()
+    inactive_members = CustomUser.objects.filter(is_staff=False, is_active=False).count()
+    
+    context = {
+        'total_mrr': total_mrr,
+        'member_growth': member_growth,
+        'class_popularity': class_popularity,
+        'trainer_performance': trainer_performance,
+        'active_members': active_members,
+        'inactive_members': inactive_members,
+    }
+    
+    return render(request, 'staff/reports.html', context)
+
+
+# Trainer Management Views
+@method_decorator(login_required, name='dispatch')
+class TrainerListView(StaffRequiredMixin, ListView):
+    """List all trainers"""
+    template_name = 'staff/trainer_list.html'
+    context_object_name = 'trainers'
+    model = Trainer
+
+
+@login_required
+def trainer_create(request):
+    """Create a new trainer"""
+    if not request.user.is_staff:
+        raise PermissionDenied("You do not have permission to access this page.")
+    
+    # Get users who don't already have a trainer profile
+    existing_trainer_user_ids = Trainer.objects.values_list('user_id', flat=True)
+    available_users = CustomUser.objects.exclude(id__in=existing_trainer_user_ids)
+    
+    if request.method == 'POST':
+        user_id = request.POST.get('user')
+        bio = request.POST.get('bio')
+        specializations = request.POST.get('specializations')
+        
+        if user_id:
+            try:
+                user = CustomUser.objects.get(id=user_id)
+                Trainer.objects.create(
+                    user=user,
+                    bio=bio,
+                    specializations=specializations
+                )
+                messages.success(request, f'Trainer created successfully for {user.get_full_name()}!')
+                return redirect('staff:trainer_list')
+            except CustomUser.DoesNotExist:
+                messages.error(request, 'Invalid user selected.')
+            except Exception as e:
+                messages.error(request, f'Error creating trainer: {str(e)}')
+    
+    return render(request, 'staff/trainer_form.html', {
+        'available_users': available_users,
+        'action': 'Create'
+    })
+
+
+@login_required
+def trainer_edit(request, trainer_id):
+    """Edit a trainer"""
+    if not request.user.is_staff:
+        raise PermissionDenied("You do not have permission to access this page.")
+    
+    trainer = get_object_or_404(Trainer, id=trainer_id)
+    
+    if request.method == 'POST':
+        trainer.bio = request.POST.get('bio')
+        trainer.specializations = request.POST.get('specializations')
+        
+        try:
+            trainer.save()
+            messages.success(request, f'Trainer updated successfully!')
+            return redirect('staff:trainer_list')
+        except Exception as e:
+            messages.error(request, f'Error updating trainer: {str(e)}')
+    
+    return render(request, 'staff/trainer_form.html', {
+        'trainer': trainer,
+        'action': 'Edit'
+    })
+
+
+# Challenge Management Views
+@method_decorator(login_required, name='dispatch')
+class ChallengeListView(StaffRequiredMixin, ListView):
+    """List all challenges"""
+    template_name = 'staff/challenge_list.html'
+    context_object_name = 'challenges'
+    model = Challenge
+
+
+@login_required
+def challenge_create(request):
+    """Create a new challenge"""
+    if not request.user.is_staff:
+        raise PermissionDenied("You do not have permission to access this page.")
+    
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        description = request.POST.get('description')
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+        goal_type = request.POST.get('goal_type')
+        goal_value = request.POST.get('goal_value')
+        
+        if name and description and start_date and end_date and goal_type:
+            try:
+                challenge = Challenge.objects.create(
+                    name=name,
+                    description=description,
+                    start_date=start_date,
+                    end_date=end_date,
+                    goal_type=goal_type,
+                    goal_value=int(goal_value) if goal_value else None
+                )
+                messages.success(request, f'Challenge "{challenge.name}" created successfully!')
+                return redirect('staff:challenge_list')
+            except Exception as e:
+                messages.error(request, f'Error creating challenge: {str(e)}')
+    
+    return render(request, 'staff/challenge_form.html', {
+        'goal_types': Challenge.GOAL_TYPES,
+        'action': 'Create'
+    })
+
+
+@login_required
+def challenge_edit(request, challenge_id):
+    """Edit a challenge"""
+    if not request.user.is_staff:
+        raise PermissionDenied("You do not have permission to access this page.")
+    
+    challenge = get_object_or_404(Challenge, id=challenge_id)
+    
+    if request.method == 'POST':
+        challenge.name = request.POST.get('name')
+        challenge.description = request.POST.get('description')
+        challenge.start_date = request.POST.get('start_date')
+        challenge.end_date = request.POST.get('end_date')
+        challenge.goal_type = request.POST.get('goal_type')
+        challenge.goal_value = request.POST.get('goal_value')
+        
+        try:
+            challenge.goal_value = int(challenge.goal_value) if challenge.goal_value else None
+            challenge.save()
+            messages.success(request, f'Challenge "{challenge.name}" updated successfully!')
+            return redirect('staff:challenge_list')
+        except Exception as e:
+            messages.error(request, f'Error updating challenge: {str(e)}')
+    
+    return render(request, 'staff/challenge_form.html', {
+        'challenge': challenge,
+        'goal_types': Challenge.GOAL_TYPES,
+        'action': 'Edit'
+    })
 
 
 # Trainer Portal Views

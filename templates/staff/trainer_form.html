@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ action }} Trainer - Staff Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold">{{ action }} Trainer</h1>
+        <p class="text-gray-600">{% if action == 'Create' %}Select a user and add trainer information{% else %}Update trainer details{% endif %}</p>
+    </div>
+
+    <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
+        <form method="POST">
+            {% csrf_token %}
+            
+            {% if action == 'Create' %}
+            <div class="mb-4">
+                <label for="user" class="block text-sm font-medium text-gray-700 mb-2">
+                    Select User *
+                </label>
+                <select id="user" name="user" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">-- Select a user --</option>
+                    {% for user in available_users %}
+                    <option value="{{ user.id }}">{{ user.get_full_name }} ({{ user.email }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% else %}
+            <div class="mb-4">
+                <p class="text-sm text-gray-600">User: <span class="font-semibold">{{ trainer.user.get_full_name }} ({{ trainer.user.email }})</span></p>
+            </div>
+            {% endif %}
+            
+            <div class="mb-4">
+                <label for="bio" class="block text-sm font-medium text-gray-700 mb-2">
+                    Bio
+                </label>
+                <textarea id="bio" name="bio" rows="4"
+                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">{% if trainer %}{{ trainer.bio }}{% endif %}</textarea>
+            </div>
+            
+            <div class="mb-6">
+                <label for="specializations" class="block text-sm font-medium text-gray-700 mb-2">
+                    Specializations
+                </label>
+                <input type="text" id="specializations" name="specializations"
+                       value="{% if trainer %}{{ trainer.specializations }}{% endif %}"
+                       placeholder="e.g., Yoga, Strength Training, Cardio"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <p class="text-xs text-gray-500 mt-1">Comma-separated list of specializations</p>
+            </div>
+            
+            <div class="flex gap-4">
+                <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition">
+                    {{ action }} Trainer
+                </button>
+                <a href="{% url 'staff:trainer_list' %}" class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg hover:bg-gray-300 transition text-center">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

@@ -15,12 +15,26 @@ def book_class(request):
     
     if request.method == 'POST':
         class_id = request.POST.get('class_id')
-        booking_date = request.POST.get('booking_date')
+        booking_date_str = request.POST.get('booking_date')
+        
+        # Validate and parse date
+        try:
+            booking_date = datetime.strptime(booking_date_str, '%Y-%m-%d').date()
+            weekday_name = booking_date.strftime('%A').lower()
+        except ValueError:
+            messages.error(request, 'Invalid date format.')
+            return redirect('bookings:book_class')
         
         try:
             with transaction.atomic():
                 # Lock the GymClass row until this transaction is done
                 gym_class = GymClass.objects.select_for_update().get(id=class_id, is_active=True)
+
+                # Validate weekday
+                valid_days = [day.strip().lower() for day in gym_class.schedule_days.split(',')]
+                if weekday_name not in valid_days:
+                    messages.error(request, f'{gym_class.name} is not available on a {weekday_name.title()}.')
+                    return redirect('bookings:book_class')
 
                 # Re-check capacity *inside* the transaction
                 existing_bookings = Booking.objects.filter(

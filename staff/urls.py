@@ -8,6 +8,8 @@ urlpatterns = [
     path('', views.StaffDashboard.as_view(), name='dashboard'),
     path('members/', views.MemberListView.as_view(), name='member_list'),
     path('members/<int:user_id>/', views.member_detail, name='member_detail'),
+    path('members/<int:user_id>/add-points/', views.add_manual_points, name='add_manual_points'),
+    path('members/<int:user_id>/manage-subscription/', views.manage_subscription, name='manage_subscription'),
     
     # Membership Plans
     path('plans/', views.PlanListView.as_view(), name='plan_list'),
@@ -26,5 +28,18 @@ urlpatterns = [
     
     # Check-in
     path('checkin/', views.checkin_view, name='checkin'),
+    
+    # Reports
+    path('reports/', views.reports_dashboard, name='reports'),
+    
+    # Trainers
+    path('trainers/', views.TrainerListView.as_view(), name='trainer_list'),
+    path('trainers/create/', views.trainer_create, name='trainer_create'),
+    path('trainers/<int:trainer_id>/edit/', views.trainer_edit, name='trainer_edit'),
+    
+    # Challenges
+    path('challenges/', views.ChallengeListView.as_view(), name='challenge_list'),
+    path('challenges/create/', views.challenge_create, name='challenge_create'),
+    path('challenges/<int:challenge_id>/edit/', views.challenge_edit, name='challenge_edit'),
 ]
 

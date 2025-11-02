@@ -5,6 +5,13 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from .models import QRCodeSession, UserPoints, UserStreak
 
+# Import challenge models
+try:
+    from community.models import UserChallenge
+except ImportError:
+    # Handle case where community app might not be available
+    UserChallenge = None
+
 
 def generate_qr_code(user):
     """Generate QR code for gym entry"""
@@ -63,6 +70,10 @@ def award_points_and_update_streak(user, points, source='workout', description='
     
     # Update streak
     update_user_streak(user)
+    
+    # Update active challenge progress
+    if UserChallenge is not None:
+        update_challenge_progress(user, points, source)
 
 
 def update_user_streak(user):
@@ -101,4 +112,36 @@ def update_user_streak(user):
     # Update last activity date
     streak.last_activity_date = today
     streak.save()
+
+
+def update_challenge_progress(user, points, source):
+    """Update user's progress in active challenges"""
+    today = timezone.now().date()
+    
+    # Find all active challenges this user has joined
+    active_user_challenges = UserChallenge.objects.filter(
+        user=user,
+        challenge__start_date__lte=today,
+        challenge__end_date__gte=today
+    )
+    
+    for user_challenge in active_user_challenges:
+        challenge_type = user_challenge.challenge.goal_type
+        
+        # Check if the source of the points matches the challenge type
+        if (challenge_type == 'visits' and source == 'checkin') or \
+           (challenge_type == 'workouts' and source == 'workout') or \
+           (challenge_type == 'points'):  # 'points' type increments by points earned
+            
+            if challenge_type == 'points':
+                # Add the points value for points challenges
+                user_challenge.progress += points
+            else:
+                # Add 1 for visits or workouts
+                user_challenge.progress += 1
+            
+            user_challenge.save()
+        
+        # Note: 'streak' type challenges would need separate handling
+        # by syncing user.streak.current_streak to user_challenge.progress
 
