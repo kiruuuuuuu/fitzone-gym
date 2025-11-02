@@ -11,7 +11,7 @@ from .mixins import StaffRequiredMixin, TrainerRequiredMixin
 
 from core.models import CustomUser, MembershipPlan, Subscription, Trainer, UserPoints, QRCodeSession
 from bookings.models import GymClass, Booking
-from workouts.models import Workout
+from workouts.models import Workout, WorkoutPlan, UserWorkoutPlan
 from community.models import Challenge
 
 
@@ -781,3 +781,125 @@ def mark_attendance(request, booking_id):
         messages.info(request, f'{booking.user.get_full_name()} marked as no show.')
     
     return redirect('trainer:class_roster', class_id=booking.gym_class.id)
+
+
+# Trainer Workout Plan Views
+@method_decorator(login_required, name='dispatch')
+class TrainerPlanListView(TrainerRequiredMixin, ListView):
+    """List all workout plans created by the trainer"""
+    template_name = 'trainer/plan_list.html'
+    context_object_name = 'plans'
+
+    def get_queryset(self):
+        return WorkoutPlan.objects.filter(trainer=self.request.user.trainer_profile)
+
+
+@login_required
+def trainer_plan_create(request):
+    """Create a new workout plan"""
+    if not hasattr(request.user, 'trainer_profile'):
+        raise PermissionDenied("You must be a trainer to access this page.")
+    
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        description = request.POST.get('description')
+        workout_ids = request.POST.getlist('workouts')
+        
+        if name:
+            try:
+                plan = WorkoutPlan.objects.create(
+                    trainer=request.user.trainer_profile,
+                    name=name,
+                    description=description
+                )
+                # Add selected workouts to the plan
+                if workout_ids:
+                    plan.workouts.set(workout_ids)
+                
+                messages.success(request, f'Workout plan "{plan.name}" created successfully!')
+                return redirect('trainer:plan_list')
+            except Exception as e:
+                messages.error(request, f'Error creating workout plan: {str(e)}')
+    
+    workouts = Workout.objects.all().order_by('category', 'difficulty_level', 'title')
+    return render(request, 'trainer/plan_form.html', {
+        'workouts': workouts,
+        'action': 'Create'
+    })
+
+
+@login_required
+def trainer_plan_edit(request, plan_id):
+    """Edit a workout plan"""
+    if not hasattr(request.user, 'trainer_profile'):
+        raise PermissionDenied("You must be a trainer to access this page.")
+    
+    plan = get_object_or_404(WorkoutPlan, id=plan_id, trainer=request.user.trainer_profile)
+    
+    if request.method == 'POST':
+        plan.name = request.POST.get('name')
+        plan.description = request.POST.get('description')
+        workout_ids = request.POST.getlist('workouts')
+        
+        try:
+            plan.save()
+            # Update selected workouts
+            if workout_ids:
+                plan.workouts.set(workout_ids)
+            else:
+                plan.workouts.clear()
+            
+            messages.success(request, f'Workout plan "{plan.name}" updated successfully!')
+            return redirect('trainer:plan_list')
+        except Exception as e:
+            messages.error(request, f'Error updating workout plan: {str(e)}')
+    
+    workouts = Workout.objects.all().order_by('category', 'difficulty_level', 'title')
+    return render(request, 'trainer/plan_form.html', {
+        'plan': plan,
+        'workouts': workouts,
+        'action': 'Edit'
+    })
+
+
+@login_required
+def trainer_plan_assign(request, plan_id):
+    """Assign a workout plan to a member"""
+    if not hasattr(request.user, 'trainer_profile'):
+        raise PermissionDenied("You must be a trainer to access this page.")
+    
+    plan = get_object_or_404(WorkoutPlan, id=plan_id, trainer=request.user.trainer_profile)
+    
+    if request.method == 'POST':
+        user_id = request.POST.get('user')
+        notes = request.POST.get('notes')
+        
+        if user_id:
+            try:
+                user = CustomUser.objects.get(id=user_id, is_staff=False)
+                
+                # Check if already assigned
+                existing = UserWorkoutPlan.objects.filter(user=user, plan=plan).first()
+                if existing:
+                    messages.error(request, f'{user.get_full_name()} already has this plan assigned.')
+                    return redirect('trainer:plan_assign', plan_id=plan_id)
+                
+                UserWorkoutPlan.objects.create(
+                    user=user,
+                    plan=plan,
+                    notes=notes
+                )
+                
+                messages.success(request, f'Workout plan assigned to {user.get_full_name()}!')
+                return redirect('trainer:plan_list')
+            except CustomUser.DoesNotExist:
+                messages.error(request, 'Invalid user selected.')
+            except Exception as e:
+                messages.error(request, f'Error assigning plan: {str(e)}')
+    
+    # Get all non-staff members
+    members = CustomUser.objects.filter(is_staff=False).order_by('first_name', 'last_name')
+    return render(request, 'trainer/plan_assign.html', {
+        'plan': plan,
+        'members': members
+    })

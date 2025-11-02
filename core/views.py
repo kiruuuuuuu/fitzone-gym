@@ -6,6 +6,7 @@ from django.db.models import Sum
 from .models import MembershipPlan, Subscription, CustomUser, UserPoints
 from .forms import RegistrationForm, ContactForm
 from bookings.models import Booking, GymClass
+from workouts.models import UserWorkoutPlan
 from datetime import datetime, timedelta
 
 
@@ -96,11 +97,15 @@ def dashboard(request):
         total=Sum('points')
     )['total'] or 0
     
+    # Get assigned workout plans
+    assigned_plans = UserWorkoutPlan.objects.filter(user=user).select_related('plan', 'plan__trainer')
+    
     context = {
         'subscription': subscription,
         'upcoming_bookings': upcoming_bookings,
         'streak': streak,
         'total_points': total_points,
+        'assigned_plans': assigned_plans,
     }
     return render(request, 'dashboard.html', context)
 

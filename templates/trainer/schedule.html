@@ -8,6 +8,11 @@
     <div class="mb-8">
         <h1 class="text-3xl font-bold">My Schedule</h1>
         <p class="text-gray-600">Welcome, {{ trainer.user.get_full_name }}!</p>
+        <div class="mt-4 flex gap-4">
+            <a href="{% url 'trainer:plan_list' %}" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition">
+                My Workout Plans
+            </a>
+        </div>
     </div>
 
     {% if upcoming_classes %}
