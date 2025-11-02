@@ -7,17 +7,18 @@ from django.views.generic import TemplateView
 from django.utils.decorators import method_decorator
 
 from core.models import CustomUser, Subscription
-from .mixins import StaffRequiredMixin
 
 
 @method_decorator(login_required, name='dispatch')
-class AdminDashboardView(StaffRequiredMixin, TemplateView):
+class AdminDashboardView(TemplateView):
     """Custom admin dashboard"""
     template_name = 'admin/custom_dashboard.html'
     
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_superuser:
-            raise PermissionDenied("Only superusers can access the admin dashboard.")
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if not request.user.is_staff:
+            raise PermissionDenied("You do not have permission to access this page.")
         return super().dispatch(request, *args, **kwargs)
     
     def get_context_data(self, **kwargs):
