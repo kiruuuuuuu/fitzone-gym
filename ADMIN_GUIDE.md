@@ -1,10 +1,29 @@
 # Admin Guide - FitZone Gym
 
+> **Note:** Most day-to-day operations are now available in the **Staff Portal** at `/staff/`. Django Admin is still available for advanced configuration and system administration. The Staff Portal provides a more user-friendly interface for managing members, plans, classes, trainers, and workouts.
+
 ## Accessing Admin Panel
 
 When logged in as a staff/superuser, you'll see an "Admin" link in the navigation bar. Click it to access Django Admin at `/admin/`.
 
 Alternatively, go directly to: `http://127.0.0.1:8000/admin/`
+
+## Staff Portal vs Django Admin
+
+**Staff Portal (`/staff/`):**
+- User-friendly interface designed for gym operations
+- Member management with search and detailed views
+- Plan, class, trainer, workout, and challenge management
+- QR code check-in system
+- Analytics and reporting dashboard
+- Manual points and subscription management
+
+**Django Admin (`/admin/`):**
+- Advanced configuration
+- Database-level operations
+- System administration
+- Technical debugging
+- Full model editing capabilities
 
 ## Creating Membership Plans
 

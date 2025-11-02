@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ action }} Membership Plan{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold">{{ action }} Membership Plan</h1>
+        <p class="text-gray-600">Create or edit a subscription pricing plan</p>
+    </div>
+
+    <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
+        <form method="POST">
+            {% csrf_token %}
+            
+            <div class="mb-6">
+                <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                    Plan Name *
+                </label>
+                <input type="text" id="name" name="name" required
+                       value="{% if plan %}{{ plan.name }}{% endif %}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+            
+            <div class="mb-6">
+                <label for="price" class="block text-sm font-medium text-gray-700 mb-2">
+                    Price (USD/Month) *
+                </label>
+                <input type="number" id="price" name="price" step="0.01" required
+                       value="{% if plan %}{{ plan.price }}{% endif %}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+            
+            <div class="mb-6">
+                <label for="features" class="block text-sm font-medium text-gray-700 mb-2">
+                    Features *
+                </label>
+                <textarea id="features" name="features" rows="6" required
+                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">{% if plan %}{{ plan.features }}{% endif %}</textarea>
+                <p class="text-xs text-gray-500 mt-1">Enter features one per line (e.g., Access to all equipment, Group classes included)</p>
+            </div>
+            
+            <div class="mb-6">
+                <label for="stripe_price_id" class="block text-sm font-medium text-gray-700 mb-2">
+                    Stripe Price ID
+                </label>
+                <input type="text" id="stripe_price_id" name="stripe_price_id"
+                       value="{% if plan %}{{ plan.stripe_price_id }}{% endif %}"
+                       placeholder="price_xxxxx"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <p class="text-xs text-gray-500 mt-1">Required for active plans. Get this from your Stripe Dashboard</p>
+            </div>
+            
+            <div class="mb-6">
+                <div class="flex items-center">
+                    <input type="checkbox" id="is_active" name="is_active" 
+                           {% if plan.is_active or not plan %}checked{% endif %}
+                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    <label for="is_active" class="ml-2 block text-sm text-gray-900">
+                        Is Active (Plan is available for signup)
+                    </label>
+                </div>
+                <p class="text-xs text-gray-500 mt-1 ml-6">
+                    <strong>Warning:</strong> Active plans must have a Stripe Price ID to function properly
+                </p>
+            </div>
+            
+            <div class="flex gap-4">
+                <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition">
+                    {{ action }} Plan
+                </button>
+                <a href="{% url 'staff:plan_list' %}" class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg hover:bg-gray-300 transition text-center">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

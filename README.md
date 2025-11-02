@@ -27,6 +27,8 @@ A full-featured gym management platform built with Django, Tailwind CSS, and Alp
 - Mark class attendance (attended/no show)
 - Track booking numbers
 - Manage class schedules
+- Create personalized workout plans
+- Assign workout plans to members with custom notes
 
 ## Installation
 
@@ -81,15 +83,17 @@ python manage.py runserver
 
 ## Project Structure
 
-- `core/` - User management, subscriptions, gamification
-- `bookings/` - Class booking functionality
-- `workouts/` - Workout library
-- `community/` - Social hub and challenges
-- `payments/` - Stripe integration
-- `staff/` - Staff & Trainer Portal (NEW!)
-- `templates/` - HTML templates
-- `static/` - Static files (CSS, JS, images)
-- `media/` - User-uploaded files
+- `core/` - User management, subscriptions, gamification (points, streaks, QR codes)
+- `bookings/` - Class booking with race condition protection
+- `workouts/` - Workout library and personalized plans
+- `community/` - Social feed, challenges with auto-tracking
+- `payments/` - Stripe integration with webhook handling
+- `staff/` - Staff Portal (member/plan/class/workout/trainer/challenge management)
+- `templates/` - HTML templates organized by app
+- `static/` - Static assets (CSS, JS, images)
+- `staticfiles/` - Compiled static files for production
+- `media/` - User-uploaded files (workout thumbnails, trainer photos)
+- `theme/` - Tailwind CSS configuration
 
 ## Stripe Setup
 
@@ -126,7 +130,19 @@ Use Stripe test cards:
 - ✅ QR code check-in system
 - ✅ Trainer attendance tracking
 
-See [ENHANCEMENT_PLAN_IMPLEMENTED.md](ENHANCEMENT_PLAN_IMPLEMENTED.md) for full details.
+### Personalized Workout Plans
+- ✅ Trainers create and assign custom plans to members
+- ✅ Members view assigned plans on dashboard
+- ✅ Custom trainer notes per member
+
+See [IMPLEMENTATION_HISTORY.md](IMPLEMENTATION_HISTORY.md) for full details.
+
+## User Roles
+
+- **Members** - Access workouts, book classes, track progress, join challenges, view assigned workout plans
+- **Trainers** - Manage classes, track attendance, create and assign workout plans
+- **Staff** - Full operational access via Staff Portal (member/subscription/class/trainer management, QR check-in, reporting)
+- **Superusers** - Django Admin access for system configuration
 
 ## Notes
 
@@ -134,8 +150,8 @@ See [ENHANCEMENT_PLAN_IMPLEMENTED.md](ENHANCEMENT_PLAN_IMPLEMENTED.md) for full 
 - Tailwind CSS is configured via django-tailwind
 - Alpine.js is loaded via CDN for interactivity
 - All payment processing uses Stripe Test Mode
-- Staff portal accessible at `/staff/` for staff users
-- Trainer portal accessible at `/portal/` for trainers
+- Staff portal accessible at `/staff/` for staff users (replaces most Admin operations)
+- Trainer portal accessible at `/portal/` for trainers (class management and workout plans)
 
 ## License
 
