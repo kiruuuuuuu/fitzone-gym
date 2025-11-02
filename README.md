@@ -14,12 +14,19 @@ A full-featured gym management platform built with Django, Tailwind CSS, and Alp
 - Community feed and challenges
 
 ### For Administrators
-- Comprehensive admin dashboard
-- Member management
+- **Staff Portal** - Frontend dashboard for daily operations
+- Member management with search and details
 - Class and trainer management
 - Subscription plan management
+- Workout library management
+- QR code check-in system
 - Email communication tools
-- Analytics and metrics
+
+### For Trainers
+- **Trainer Portal** - View assigned classes and rosters
+- Mark class attendance (attended/no show)
+- Track booking numbers
+- Manage class schedules
 
 ## Installation
 
@@ -79,6 +86,7 @@ python manage.py runserver
 - `workouts/` - Workout library
 - `community/` - Social hub and challenges
 - `payments/` - Stripe integration
+- `staff/` - Staff & Trainer Portal (NEW!)
 - `templates/` - HTML templates
 - `static/` - Static files (CSS, JS, images)
 - `media/` - User-uploaded files
@@ -99,12 +107,35 @@ Use Stripe test cards:
 - Success: `4242 4242 4242 4242`
 - Decline: `4000 0000 0000 0002`
 
+## Recent Enhancements (2025)
+
+### Critical Bug Fixes
+- ✅ Fixed booking race condition with atomic transactions
+- ✅ Improved Stripe price validation
+- ✅ Enhanced webhook error handling
+
+### Gamification System
+- ✅ Points awarded for workouts (10 pts), classes (15 pts), and check-ins (5 pts)
+- ✅ Automatic streak tracking with daily validation
+- ✅ Progress visualization on dashboard
+
+### Staff & Trainer Portals
+- ✅ Complete frontend for staff operations (replaces Admin-only access)
+- ✅ Member management with search
+- ✅ Class and workout management
+- ✅ QR code check-in system
+- ✅ Trainer attendance tracking
+
+See [ENHANCEMENT_PLAN_IMPLEMENTED.md](ENHANCEMENT_PLAN_IMPLEMENTED.md) for full details.
+
 ## Notes
 
 - The platform uses SQLite for development (can be switched to PostgreSQL for production)
 - Tailwind CSS is configured via django-tailwind
 - Alpine.js is loaded via CDN for interactivity
 - All payment processing uses Stripe Test Mode
+- Staff portal accessible at `/staff/` for staff users
+- Trainer portal accessible at `/portal/` for trainers
 
 ## License
 
