@@ -33,29 +33,63 @@
             
             <div class="mb-6">
                 <label for="category" class="block text-sm font-medium text-gray-700 mb-2">
-                    <i class="fas fa-tags mr-2"></i>Category *
+                    <i class="fas fa-tags mr-2"></i>Category / Muscle Group *
                 </label>
                 <select id="category" name="category" required
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     <option value="">-- Select Category --</option>
-                    {% for value, label in categories %}
-                    <option value="{{ value }}" {% if workout.category == value %}selected{% endif %}>
-                        {{ label }}
-                    </option>
-                    {% endfor %}
+                    <optgroup label="Muscle Groups">
+                        <option value="chest" {% if workout.category == 'chest' %}selected{% endif %}>Chest</option>
+                        <option value="shoulder" {% if workout.category == 'shoulder' %}selected{% endif %}>Shoulder</option>
+                        <option value="back" {% if workout.category == 'back' %}selected{% endif %}>Back</option>
+                        <option value="legs" {% if workout.category == 'legs' %}selected{% endif %}>Legs</option>
+                        <option value="arms" {% if workout.category == 'arms' %}selected{% endif %}>Arms</option>
+                        <option value="abs" {% if workout.category == 'abs' %}selected{% endif %}>Abs</option>
+                        <option value="full_body" {% if workout.category == 'full_body' %}selected{% endif %}>Full Body</option>
+                    </optgroup>
+                    <optgroup label="Exercise Types">
+                        <option value="cardio" {% if workout.category == 'cardio' %}selected{% endif %}>Cardio</option>
+                        <option value="strength" {% if workout.category == 'strength' %}selected{% endif %}>Strength Training</option>
+                        <option value="flexibility" {% if workout.category == 'flexibility' %}selected{% endif %}>Flexibility</option>
+                        <option value="hiit" {% if workout.category == 'hiit' %}selected{% endif %}>HIIT</option>
+                        <option value="yoga" {% if workout.category == 'yoga' %}selected{% endif %}>Yoga</option>
+                        <option value="pilates" {% if workout.category == 'pilates' %}selected{% endif %}>Pilates</option>
+                        <option value="other" {% if workout.category == 'other' %}selected{% endif %}>Other</option>
+                    </optgroup>
                 </select>
+                <p class="text-xs text-gray-500 mt-1">Select the muscle group or exercise type for this workout</p>
             </div>
             
-            <div class="mb-6">
-                <div class="flex items-center">
-                    <input type="checkbox" id="is_free" name="is_free" 
-                           {% if workout and workout.is_free %}checked{% endif %}
-                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                    <label for="is_free" class="ml-2 block text-sm text-gray-900">
-                        <i class="fas fa-unlock mr-1"></i>Free Workout (Available to all users without subscription)
-                    </label>
+            <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <label class="block text-sm font-medium text-gray-700 mb-3">
+                    <i class="fas fa-dollar-sign mr-2"></i>Workout Access Type *
+                </label>
+                <div class="space-y-3">
+                    <div class="flex items-start">
+                        <input type="radio" id="is_free_true" name="is_free" value="true"
+                               {% if workout and workout.is_free %}checked{% elif not workout %}checked{% endif %}
+                               class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 mt-1">
+                        <label for="is_free_true" class="ml-3 flex-1">
+                            <div class="flex items-center">
+                                <i class="fas fa-unlock text-green-600 mr-2"></i>
+                                <span class="font-semibold text-gray-900">Free Workout</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">Available to all users without any subscription. Anyone can access this workout.</p>
+                        </label>
+                    </div>
+                    <div class="flex items-start">
+                        <input type="radio" id="is_free_false" name="is_free" value="false"
+                               {% if workout and not workout.is_free %}checked{% endif %}
+                               class="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 mt-1">
+                        <label for="is_free_false" class="ml-3 flex-1">
+                            <div class="flex items-center">
+                                <i class="fas fa-crown text-yellow-600 mr-2"></i>
+                                <span class="font-semibold text-gray-900">Premium Workout</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">Only accessible to users with an active subscription to a membership plan that includes this workout.</p>
+                        </label>
+                    </div>
                 </div>
-                <p class="text-xs text-gray-500 mt-1 ml-6">If unchecked, this workout will only be accessible to users with a membership plan that includes it.</p>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">

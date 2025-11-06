@@ -446,7 +446,7 @@ def workout_create(request):
         difficulty = request.POST.get('difficulty_level')
         duration = request.POST.get('duration')
         category = request.POST.get('category')
-        is_free = request.POST.get('is_free') == 'on'
+        is_free = request.POST.get('is_free', 'true') == 'true'  # Default to free if not specified
         
         if title and description and difficulty and duration and category:
             try:
@@ -487,7 +487,7 @@ def workout_edit(request, workout_id):
         workout.difficulty_level = request.POST.get('difficulty_level')
         workout.duration = request.POST.get('duration')
         workout.category = request.POST.get('category')
-        workout.is_free = request.POST.get('is_free') == 'on'
+        workout.is_free = request.POST.get('is_free', 'true') == 'true'  # Default to free if not specified
         
         # Handle thumbnail upload
         if 'thumbnail' in request.FILES:
