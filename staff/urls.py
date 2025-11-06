@@ -41,5 +41,10 @@ urlpatterns = [
     path('challenges/', views.ChallengeListView.as_view(), name='challenge_list'),
     path('challenges/create/', views.challenge_create, name='challenge_create'),
     path('challenges/<int:challenge_id>/edit/', views.challenge_edit, name='challenge_edit'),
+    
+    # Staff User Management
+    path('staff-users/', views.StaffUserListView.as_view(), name='staff_user_list'),
+    path('staff-users/create/', views.staff_user_create, name='staff_user_create'),
+    path('staff-users/<int:user_id>/toggle-staff/', views.toggle_staff_status, name='toggle_staff_status'),
 ]
 

@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from django.db.models import Count, Sum, Q
 from django.views.decorators.http import require_POST
@@ -744,6 +745,113 @@ def challenge_edit(request, challenge_id):
         'goal_types': Challenge.GOAL_TYPES,
         'action': 'Edit'
     })
+
+
+# Staff User Management Views
+@method_decorator(login_required, name='dispatch')
+class StaffUserListView(StaffRequiredMixin, ListView):
+    """List all users (staff and members) for staff management"""
+    template_name = 'staff/staff_user_list.html'
+    context_object_name = 'users'
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = CustomUser.objects.all()
+        
+        # Filter by staff status
+        staff_filter = self.request.GET.get('filter')
+        if staff_filter == 'staff':
+            queryset = queryset.filter(is_staff=True)
+        elif staff_filter == 'members':
+            queryset = queryset.filter(is_staff=False)
+        
+        # Search functionality
+        search_query = self.request.GET.get('search')
+        if search_query:
+            queryset = queryset.filter(
+                Q(username__icontains=search_query) |
+                Q(email__icontains=search_query) |
+                Q(first_name__icontains=search_query) |
+                Q(last_name__icontains=search_query)
+            )
+        
+        return queryset.order_by('-is_staff', '-created_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_query'] = self.request.GET.get('search', '')
+        context['filter'] = self.request.GET.get('filter', 'all')
+        context['total_staff'] = CustomUser.objects.filter(is_staff=True).count()
+        context['total_members'] = CustomUser.objects.filter(is_staff=False).count()
+        return context
+
+
+@login_required
+def staff_user_create(request):
+    """Create a new staff user"""
+    if not request.user.is_staff:
+        raise PermissionDenied("You do not have permission to access this page.")
+    
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        password_confirm = request.POST.get('password_confirm')
+        first_name = request.POST.get('first_name', '')
+        last_name = request.POST.get('last_name', '')
+        is_staff = request.POST.get('is_staff') == 'on'
+        is_active = request.POST.get('is_active', 'on') == 'on'
+        
+        # Validation
+        if not username or not password:
+            messages.error(request, 'Username and password are required.')
+        elif password != password_confirm:
+            messages.error(request, 'Passwords do not match.')
+        elif CustomUser.objects.filter(username=username).exists():
+            messages.error(request, 'Username already exists.')
+        elif email and CustomUser.objects.filter(email=email).exists():
+            messages.error(request, 'Email already exists.')
+        else:
+            try:
+                user = CustomUser.objects.create_user(
+                    username=username,
+                    email=email if email else None,
+                    password=password,
+                    first_name=first_name,
+                    last_name=last_name,
+                    is_staff=is_staff,
+                    is_active=is_active
+                )
+                messages.success(request, f'User "{user.username}" created successfully!')
+                return redirect('staff:staff_user_list')
+            except Exception as e:
+                messages.error(request, f'Error creating user: {str(e)}')
+    
+    return render(request, 'staff/staff_user_form.html', {'action': 'Create'})
+
+
+@login_required
+@require_POST
+def toggle_staff_status(request, user_id):
+    """Toggle staff status for an existing user"""
+    if not request.user.is_staff:
+        raise PermissionDenied("You do not have permission to access this page.")
+    
+    # Prevent users from removing their own staff status
+    if request.user.id == int(user_id):
+        messages.error(request, 'You cannot change your own staff status.')
+        return redirect('staff:staff_user_list')
+    
+    user = get_object_or_404(CustomUser, id=user_id)
+    
+    # Toggle staff status
+    user.is_staff = not user.is_staff
+    user.save()
+    
+    status = 'staff member' if user.is_staff else 'regular member'
+    messages.success(request, f'User "{user.username}" is now a {status}.')
+    
+    return redirect('staff:staff_user_list')
 
 
 # Trainer Portal Views
