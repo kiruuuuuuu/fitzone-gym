@@ -104,9 +104,11 @@
                 <a href="{% url 'staff:reports' %}" class="block w-full bg-teal-600 text-white text-center py-3 rounded-lg hover:bg-teal-700 transition">
                     <i class="fas fa-chart-bar mr-2"></i>View Reports
                 </a>
+                {% if user.is_superuser %}
                 <a href="{% url 'staff:staff_user_list' %}" class="block w-full bg-indigo-600 text-white text-center py-3 rounded-lg hover:bg-indigo-700 transition">
                     <i class="fas fa-user-shield mr-2"></i>Manage Staff Users
                 </a>
+                {% endif %}
             </div>
         </div>
     </div>

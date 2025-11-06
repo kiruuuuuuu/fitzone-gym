@@ -8,7 +8,7 @@ from django.views.decorators.http import require_POST
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, DetailView
 from datetime import datetime, timedelta
-from .mixins import StaffRequiredMixin, TrainerRequiredMixin
+from .mixins import StaffRequiredMixin, TrainerRequiredMixin, SuperuserRequiredMixin
 
 from core.models import CustomUser, MembershipPlan, Subscription, Trainer, UserPoints, QRCodeSession, PlanFeature
 from bookings.models import GymClass, Booking
@@ -747,10 +747,10 @@ def challenge_edit(request, challenge_id):
     })
 
 
-# Staff User Management Views
+# Staff User Management Views (Admin Only)
 @method_decorator(login_required, name='dispatch')
-class StaffUserListView(StaffRequiredMixin, ListView):
-    """List all users (staff and members) for staff management"""
+class StaffUserListView(SuperuserRequiredMixin, ListView):
+    """List all users (staff and members) for staff management - Admin only"""
     template_name = 'staff/staff_user_list.html'
     context_object_name = 'users'
     paginate_by = 20
@@ -788,9 +788,9 @@ class StaffUserListView(StaffRequiredMixin, ListView):
 
 @login_required
 def staff_user_create(request):
-    """Create a new staff user"""
-    if not request.user.is_staff:
-        raise PermissionDenied("You do not have permission to access this page.")
+    """Create a new staff user - Admin only"""
+    if not request.user.is_superuser:
+        raise PermissionDenied("You must be an administrator to create staff users.")
     
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -833,9 +833,9 @@ def staff_user_create(request):
 @login_required
 @require_POST
 def toggle_staff_status(request, user_id):
-    """Toggle staff status for an existing user"""
-    if not request.user.is_staff:
-        raise PermissionDenied("You do not have permission to access this page.")
+    """Toggle staff status for an existing user - Admin only"""
+    if not request.user.is_superuser:
+        raise PermissionDenied("You must be an administrator to change staff status.")
     
     # Prevent users from removing their own staff status
     if request.user.id == int(user_id):
