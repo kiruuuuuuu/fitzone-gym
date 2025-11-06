@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, MembershipPlan, Subscription, Trainer, UserPoints, UserStreak, QRCodeSession
+from .models import CustomUser, MembershipPlan, Subscription, Trainer, UserPoints, UserStreak, QRCodeSession, PlanFeature
 
 
 @admin.register(CustomUser)
@@ -39,6 +39,16 @@ class MembershipPlanAdmin(admin.ModelAdmin):
             'fields': ('stripe_price_id',)
         }),
     )
+
+
+@admin.register(PlanFeature)
+class PlanFeatureAdmin(admin.ModelAdmin):
+    """Admin interface for PlanFeature"""
+    list_display = ['plan', 'feature_text', 'icon', 'is_highlighted', 'order']
+    list_filter = ['is_highlighted', 'plan']
+    search_fields = ['feature_text', 'plan__name']
+    ordering = ['plan', 'order', 'id']
+    list_editable = ['order', 'is_highlighted']
 
 
 @admin.register(Subscription)

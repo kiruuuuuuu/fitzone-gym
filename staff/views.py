@@ -9,7 +9,7 @@ from django.views.generic import ListView, DetailView
 from datetime import datetime, timedelta
 from .mixins import StaffRequiredMixin, TrainerRequiredMixin
 
-from core.models import CustomUser, MembershipPlan, Subscription, Trainer, UserPoints, QRCodeSession
+from core.models import CustomUser, MembershipPlan, Subscription, Trainer, UserPoints, QRCodeSession, PlanFeature
 from bookings.models import GymClass, Booking
 from workouts.models import Workout, WorkoutPlan, UserWorkoutPlan
 from community.models import Challenge
@@ -238,7 +238,7 @@ def plan_create(request):
     if request.method == 'POST':
         name = request.POST.get('name')
         price = request.POST.get('price')
-        features = request.POST.get('features')
+        features = request.POST.get('features')  # Keep for backward compatibility
         stripe_price_id = request.POST.get('stripe_price_id')
         is_active = request.POST.get('is_active') == 'on'
         
@@ -247,16 +247,35 @@ def plan_create(request):
                 plan = MembershipPlan.objects.create(
                     name=name,
                     price=price,
-                    features=features,
+                    features=features,  # Keep old field for backward compatibility
                     stripe_price_id=stripe_price_id,
                     is_active=is_active
                 )
+                
+                # Handle structured features
+                feature_texts = request.POST.getlist('feature_text[]')
+                feature_icons = request.POST.getlist('feature_icon[]')
+                feature_highlighted = request.POST.getlist('feature_highlighted[]')
+                
+                for idx, (text, icon) in enumerate(zip(feature_texts, feature_icons)):
+                    if text.strip():  # Only create if feature text is not empty
+                        PlanFeature.objects.create(
+                            plan=plan,
+                            feature_text=text.strip(),
+                            icon=icon.strip(),
+                            order=idx,
+                            is_highlighted=str(idx) in feature_highlighted
+                        )
+                
                 messages.success(request, f'Plan "{plan.name}" created successfully!')
                 return redirect('staff:plan_list')
             except Exception as e:
                 messages.error(request, f'Error creating plan: {str(e)}')
     
-    return render(request, 'staff/plan_form.html', {'action': 'Create'})
+    return render(request, 'staff/plan_form.html', {
+        'action': 'Create',
+        'existing_features': []
+    })
 
 
 @login_required
@@ -270,18 +289,44 @@ def plan_edit(request, plan_id):
     if request.method == 'POST':
         plan.name = request.POST.get('name')
         plan.price = request.POST.get('price')
-        plan.features = request.POST.get('features')
+        plan.features = request.POST.get('features')  # Keep for backward compatibility
         plan.stripe_price_id = request.POST.get('stripe_price_id')
         plan.is_active = request.POST.get('is_active') == 'on'
         
         try:
             plan.save()
+            
+            # Delete existing structured features and recreate
+            plan.plan_features.all().delete()
+            
+            # Handle structured features
+            feature_texts = request.POST.getlist('feature_text[]')
+            feature_icons = request.POST.getlist('feature_icon[]')
+            feature_highlighted = request.POST.getlist('feature_highlighted[]')
+            
+            for idx, (text, icon) in enumerate(zip(feature_texts, feature_icons)):
+                if text.strip():  # Only create if feature text is not empty
+                    PlanFeature.objects.create(
+                        plan=plan,
+                        feature_text=text.strip(),
+                        icon=icon.strip(),
+                        order=idx,
+                        is_highlighted=str(idx) in feature_highlighted
+                    )
+            
             messages.success(request, f'Plan "{plan.name}" updated successfully!')
             return redirect('staff:plan_list')
         except Exception as e:
             messages.error(request, f'Error updating plan: {str(e)}')
     
-    return render(request, 'staff/plan_form.html', {'plan': plan, 'action': 'Edit'})
+    # Get existing structured features
+    existing_features = plan.plan_features.all() if plan else []
+    
+    return render(request, 'staff/plan_form.html', {
+        'plan': plan, 
+        'action': 'Edit',
+        'existing_features': existing_features
+    })
 
 
 @method_decorator(login_required, name='dispatch')
@@ -393,7 +438,8 @@ def workout_create(request):
                     video_url=video_url,
                     difficulty_level=difficulty,
                     duration=duration,
-                    category=category
+                    category=category,
+                    thumbnail=request.FILES.get('thumbnail')
                 )
                 messages.success(request, f'Workout "{title}" created successfully!')
                 return redirect('staff:workout_list')
@@ -422,6 +468,10 @@ def workout_edit(request, workout_id):
         workout.difficulty_level = request.POST.get('difficulty_level')
         workout.duration = request.POST.get('duration')
         workout.category = request.POST.get('category')
+        
+        # Handle thumbnail upload
+        if 'thumbnail' in request.FILES:
+            workout.thumbnail = request.FILES['thumbnail']
         
         try:
             workout.save()

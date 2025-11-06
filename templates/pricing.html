@@ -19,11 +19,36 @@
                     <span class="text-gray-600">/month</span>
                 </div>
                 <ul class="space-y-3 mb-8">
-                    {% for feature in plan.features.splitlines %}
-                        <li class="flex items-start">
-                            <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5"></i>
-                            <span class="text-gray-700">{{ feature }}</span>
+                    {% for feature in plan.get_feature_list %}
+                        {% if feature.is_highlighted %}
+                        <li class="flex items-start bg-yellow-50 p-2 rounded border-l-4 border-yellow-400">
+                            {% if feature.icon %}
+                                <i class="fas {{ feature.icon }} text-yellow-600 mr-2 mt-0.5"></i>
+                            {% else %}
+                                <i class="fas fa-star text-yellow-600 mr-2 mt-0.5"></i>
+                            {% endif %}
+                            <span class="text-gray-800 font-semibold">{{ feature.feature_text }}</span>
                         </li>
+                        {% else %}
+                        <li class="flex items-start">
+                            {% if feature.icon %}
+                                <i class="fas {{ feature.icon }} text-green-500 mr-2 mt-0.5"></i>
+                            {% else %}
+                                <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5"></i>
+                            {% endif %}
+                            <span class="text-gray-700">{{ feature.feature_text }}</span>
+                        </li>
+                        {% endif %}
+                    {% empty %}
+                        {# Fallback to old textarea features for backward compatibility #}
+                        {% for feature in plan.features.splitlines %}
+                            {% if feature.strip %}
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5"></i>
+                                <span class="text-gray-700">{{ feature }}</span>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
                     {% endfor %}
                 </ul>
                 {% if user.is_authenticated %}

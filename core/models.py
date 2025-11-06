@@ -19,7 +19,7 @@ class MembershipPlan(models.Model):
     """Membership subscription plans"""
     name = models.CharField(max_length=100)
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    features = models.TextField(help_text="List of features included in this plan")
+    features = models.TextField(help_text="List of features included in this plan (deprecated - use plan_features instead)")
     stripe_price_id = models.CharField(max_length=255, blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -40,6 +40,51 @@ class MembershipPlan(models.Model):
         """Call full_clean before saving to enforce validation"""
         self.full_clean()
         super().save(*args, **kwargs)
+    
+    def get_feature_list(self):
+        """Get structured features, fallback to textarea features for backward compatibility"""
+        try:
+            structured_features = self.plan_features.all()
+            if structured_features.exists():
+                return structured_features
+        except Exception:
+            # Table doesn't exist yet (migration not run) or other database error
+            # Fall through to textarea fallback
+            pass
+        
+        # Fallback: parse old textarea features into a list that mimics PlanFeature objects
+        if self.features:
+            from types import SimpleNamespace
+            features = []
+            for idx, line in enumerate(self.features.splitlines()):
+                if line.strip():
+                    # Create a simple object that mimics PlanFeature for template compatibility
+                    feature_obj = SimpleNamespace(
+                        feature_text=line.strip(),
+                        icon='',
+                        is_highlighted=False,
+                        order=idx
+                    )
+                    features.append(feature_obj)
+            return features
+        return []
+
+
+class PlanFeature(models.Model):
+    """Structured features for membership plans"""
+    plan = models.ForeignKey(MembershipPlan, on_delete=models.CASCADE, related_name='plan_features')
+    feature_text = models.CharField(max_length=200)
+    icon = models.CharField(max_length=50, blank=True, help_text="Font Awesome icon class (e.g., 'fa-check', 'fa-dumbbell')")
+    order = models.IntegerField(default=0, help_text="Display order (lower numbers appear first)")
+    is_highlighted = models.BooleanField(default=False, help_text="Show this feature prominently")
+    
+    class Meta:
+        ordering = ['order', 'id']
+        verbose_name = "Plan Feature"
+        verbose_name_plural = "Plan Features"
+    
+    def __str__(self):
+        return f"{self.plan.name} - {self.feature_text}"
 
 
 class Subscription(models.Model):

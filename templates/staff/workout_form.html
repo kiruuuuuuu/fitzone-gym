@@ -82,6 +82,22 @@
                 <p class="text-xs text-gray-500 mt-1">Optional: Link to workout video or demonstration</p>
             </div>
             
+            <div class="mb-6">
+                <label for="thumbnail" class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-image mr-2"></i>Thumbnail Image
+                </label>
+                <input type="file" id="thumbnail" name="thumbnail" accept="image/*"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <p class="text-xs text-gray-500 mt-1">Optional: Upload a thumbnail image for this workout</p>
+                {% if workout and workout.thumbnail %}
+                <div class="mt-2">
+                    <p class="text-xs text-blue-600">Current thumbnail:</p>
+                    <img src="{{ workout.thumbnail.url }}" alt="Current thumbnail" class="mt-1 h-20 w-20 object-cover rounded">
+                    <a href="{{ workout.thumbnail.url }}" target="_blank" class="text-xs text-blue-600 hover:underline ml-2">View full size</a>
+                </div>
+                {% endif %}
+            </div>
+            
             <div class="flex gap-4">
                 <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition">
                     {{ action }} Workout

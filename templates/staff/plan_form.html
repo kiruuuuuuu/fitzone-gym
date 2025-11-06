@@ -34,13 +34,164 @@
             </div>
             
             <div class="mb-6">
-                <label for="features" class="block text-sm font-medium text-gray-700 mb-2">
-                    Features *
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-list-check mr-2"></i>Plan Features *
                 </label>
-                <textarea id="features" name="features" rows="6" required
-                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">{% if plan %}{{ plan.features }}{% endif %}</textarea>
-                <p class="text-xs text-gray-500 mt-1">Enter features one per line (e.g., Access to all equipment, Group classes included)</p>
+                <div id="features-container" class="space-y-3 mb-3">
+                    {% for feature in existing_features %}
+                    <div class="feature-item flex gap-2 items-start p-3 border border-gray-300 rounded-lg bg-gray-50">
+                        <input type="hidden" name="feature_text[]" value="{{ feature.feature_text }}" class="feature-text">
+                        <input type="hidden" name="feature_icon[]" value="{{ feature.icon }}" class="feature-icon">
+                        <input type="hidden" name="feature_highlighted[]" value="{% if feature.is_highlighted %}{{ forloop.counter0 }}{% endif %}" class="feature-highlighted">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                                <i class="fas fa-grip-vertical text-gray-400 cursor-move"></i>
+                                <input type="text" value="{{ feature.feature_text }}" placeholder="Feature description" 
+                                       class="feature-text-input flex-1 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500">
+                                <input type="text" value="{{ feature.icon }}" placeholder="fa-check" 
+                                       class="feature-icon-input w-32 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                                       title="Font Awesome icon class (e.g., fa-check, fa-dumbbell)">
+                                <label class="flex items-center gap-1 text-sm">
+                                    <input type="checkbox" {% if feature.is_highlighted %}checked{% endif %} 
+                                           class="feature-highlight-checkbox">
+                                    <span>Highlight</span>
+                                </label>
+                                <button type="button" onclick="removeFeature(this)" class="text-red-600 hover:text-red-800">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="feature-item flex gap-2 items-start p-3 border border-gray-300 rounded-lg bg-gray-50">
+                        <input type="hidden" name="feature_text[]" value="" class="feature-text">
+                        <input type="hidden" name="feature_icon[]" value="" class="feature-icon">
+                        <input type="hidden" name="feature_highlighted[]" value="" class="feature-highlighted">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                                <i class="fas fa-grip-vertical text-gray-400 cursor-move"></i>
+                                <input type="text" placeholder="Feature description" 
+                                       class="feature-text-input flex-1 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500">
+                                <input type="text" placeholder="fa-check" 
+                                       class="feature-icon-input w-32 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                                       title="Font Awesome icon class (e.g., fa-check, fa-dumbbell)">
+                                <label class="flex items-center gap-1 text-sm">
+                                    <input type="checkbox" class="feature-highlight-checkbox">
+                                    <span>Highlight</span>
+                                </label>
+                                <button type="button" onclick="removeFeature(this)" class="text-red-600 hover:text-red-800">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button type="button" onclick="addFeature()" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition text-sm">
+                    <i class="fas fa-plus mr-2"></i>Add Feature
+                </button>
+                <p class="text-xs text-gray-500 mt-2">
+                    <strong>Tip:</strong> Use Font Awesome icon classes (e.g., "fa-check", "fa-dumbbell", "fa-users"). 
+                    Check "Highlight" for important features that will be shown prominently.
+                </p>
+                <!-- Keep old textarea for backward compatibility (hidden) -->
+                <textarea id="features" name="features" rows="1" class="hidden">{% if plan %}{{ plan.features }}{% endif %}</textarea>
             </div>
+            
+            <script>
+            function addFeature() {
+                const container = document.getElementById('features-container');
+                const newFeature = document.createElement('div');
+                newFeature.className = 'feature-item flex gap-2 items-start p-3 border border-gray-300 rounded-lg bg-gray-50';
+                newFeature.innerHTML = `
+                    <input type="hidden" name="feature_text[]" value="" class="feature-text">
+                    <input type="hidden" name="feature_icon[]" value="" class="feature-icon">
+                    <input type="hidden" name="feature_highlighted[]" value="" class="feature-highlighted">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fas fa-grip-vertical text-gray-400 cursor-move"></i>
+                            <input type="text" placeholder="Feature description" 
+                                   class="feature-text-input flex-1 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500">
+                            <input type="text" placeholder="fa-check" 
+                                   class="feature-icon-input w-32 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                                   title="Font Awesome icon class">
+                            <label class="flex items-center gap-1 text-sm">
+                                <input type="checkbox" class="feature-highlight-checkbox">
+                                <span>Highlight</span>
+                            </label>
+                            <button type="button" onclick="removeFeature(this)" class="text-red-600 hover:text-red-800">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(newFeature);
+                attachFeatureListeners(newFeature);
+            }
+            
+            function removeFeature(button) {
+                const container = document.getElementById('features-container');
+                if (container.children.length > 1) {
+                    button.closest('.feature-item').remove();
+                    updateFeatureOrder();
+                } else {
+                    alert('At least one feature is required.');
+                }
+            }
+            
+            function attachFeatureListeners(featureItem) {
+                const textInput = featureItem.querySelector('.feature-text-input');
+                const iconInput = featureItem.querySelector('.feature-icon-input');
+                const hiddenText = featureItem.querySelector('.feature-text');
+                const hiddenIcon = featureItem.querySelector('.feature-icon');
+                const highlightCheckbox = featureItem.querySelector('.feature-highlight-checkbox');
+                const hiddenHighlight = featureItem.querySelector('.feature-highlighted');
+                
+                textInput.addEventListener('input', () => {
+                    hiddenText.value = textInput.value;
+                });
+                
+                iconInput.addEventListener('input', () => {
+                    hiddenIcon.value = iconInput.value;
+                });
+                
+                highlightCheckbox.addEventListener('change', () => {
+                    const index = Array.from(document.querySelectorAll('.feature-item')).indexOf(featureItem);
+                    hiddenHighlight.value = highlightCheckbox.checked ? index : '';
+                    updateFeatureOrder();
+                });
+            }
+            
+            function updateFeatureOrder() {
+                document.querySelectorAll('.feature-item').forEach((item, index) => {
+                    const hiddenHighlight = item.querySelector('.feature-highlighted');
+                    const checkbox = item.querySelector('.feature-highlight-checkbox');
+                    if (checkbox.checked) {
+                        hiddenHighlight.value = index;
+                    } else {
+                        hiddenHighlight.value = '';
+                    }
+                });
+            }
+            
+            // Attach listeners to existing features
+            document.querySelectorAll('.feature-item').forEach(item => {
+                attachFeatureListeners(item);
+            });
+            
+            // Update hidden fields before form submit
+            document.querySelector('form').addEventListener('submit', function(e) {
+                document.querySelectorAll('.feature-item').forEach((item, index) => {
+                    const textInput = item.querySelector('.feature-text-input');
+                    const iconInput = item.querySelector('.feature-icon-input');
+                    const hiddenText = item.querySelector('.feature-text');
+                    const hiddenIcon = item.querySelector('.feature-icon');
+                    
+                    hiddenText.value = textInput.value;
+                    hiddenIcon.value = iconInput.value;
+                });
+            });
+            </script>
             
             <div class="mb-6">
                 <label for="stripe_price_id" class="block text-sm font-medium text-gray-700 mb-2">

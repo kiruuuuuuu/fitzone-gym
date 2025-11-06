@@ -47,7 +47,19 @@
                     </td>
                     <td class="px-6 py-4">
                         <div class="text-sm text-gray-900">
-                            {{ plan.features|linebreaks|truncatewords:10 }}
+                            {% if plan.plan_features.exists %}
+                                <span class="font-semibold">{{ plan.plan_features.count }}</span> structured feature{{ plan.plan_features.count|pluralize }}
+                                {% for feature in plan.plan_features.all %}
+                                    {% if feature.is_highlighted %}
+                                        <span class="text-yellow-600 ml-2">
+                                            <i class="fas fa-star"></i> Has highlights
+                                        </span>
+                                        {% break %}
+                                    {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                {{ plan.features|linebreaks|truncatewords:10 }}
+                            {% endif %}
                         </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
