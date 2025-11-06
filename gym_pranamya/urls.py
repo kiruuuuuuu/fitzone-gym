@@ -22,7 +22,7 @@ from staff.admin_views import AdminDashboardView
 
 urlpatterns = [
     path('admin/', AdminDashboardView.as_view(), name='custom_admin'),
-    path('django-admin/', admin.site.urls),  # Keep Django admin accessible at /django-admin/
+    path('django-admin/', admin.site.urls, name='admin'),  # Keep Django admin accessible at /django-admin/
     path('', include('core.urls')),
     path('bookings/', include('bookings.urls')),
     path('workouts/', include('workouts.urls')),
