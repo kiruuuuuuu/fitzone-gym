@@ -27,13 +27,18 @@ class CustomUserAdmin(UserAdmin):
 @admin.register(MembershipPlan)
 class MembershipPlanAdmin(admin.ModelAdmin):
     """Admin interface for MembershipPlan"""
-    list_display = ['name', 'price', 'is_active', 'stripe_price_id', 'created_at']
-    list_filter = ['is_active', 'created_at']
+    list_display = ['name', 'price', 'duration', 'is_active', 'stripe_price_id', 'created_at']
+    list_filter = ['is_active', 'duration', 'created_at']
     search_fields = ['name', 'stripe_price_id']
     ordering = ['price']
+    filter_horizontal = ['included_workouts']
     fieldsets = (
         ('Plan Information', {
-            'fields': ('name', 'price', 'features', 'is_active')
+            'fields': ('name', 'price', 'duration', 'features', 'is_active')
+        }),
+        ('Included Workouts', {
+            'fields': ('included_workouts',),
+            'description': 'Select workouts that will be included with this membership plan'
         }),
         ('Stripe Integration', {
             'fields': ('stripe_price_id',)

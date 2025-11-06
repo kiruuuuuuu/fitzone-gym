@@ -14,9 +14,19 @@
             {% for plan in plans %}
             <div class="border border-gray-200 rounded-lg p-8 hover:shadow-lg transition">
                 <h3 class="text-2xl font-bold mb-4"><i class="fas fa-ticket-alt mr-2"></i>{{ plan.name }}</h3>
-                <div class="mb-6">
+                <div class="mb-4">
                     <span class="text-4xl font-bold">{{ plan.price|rupees }}</span>
-                    <span class="text-gray-600">/month</span>
+                    <span class="text-gray-600">/{{ plan.get_duration_display|lower }}</span>
+                </div>
+                <div class="mb-6 pb-4 border-b border-gray-200">
+                    <p class="text-sm text-gray-600">
+                        <i class="fas fa-calendar-alt mr-2"></i>Duration: <span class="font-semibold">{{ plan.get_duration_display }}</span>
+                    </p>
+                    {% if plan.included_workouts.count > 0 %}
+                    <p class="text-sm text-gray-600 mt-2">
+                        <i class="fas fa-dumbbell mr-2"></i>Includes <span class="font-semibold text-blue-600">{{ plan.included_workouts.count }}</span> premium workout{{ plan.included_workouts.count|pluralize }}
+                    </p>
+                    {% endif %}
                 </div>
                 <ul class="space-y-3 mb-8">
                     {% for feature in plan.get_feature_list %}

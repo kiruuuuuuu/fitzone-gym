@@ -242,6 +242,7 @@ def plan_create(request):
         features = request.POST.get('features')  # Keep for backward compatibility
         stripe_price_id = request.POST.get('stripe_price_id')
         is_active = request.POST.get('is_active') == 'on'
+        duration = request.POST.get('duration', '1_month')
         
         if name and price:
             try:
@@ -250,7 +251,8 @@ def plan_create(request):
                     price=price,
                     features=features,  # Keep old field for backward compatibility
                     stripe_price_id=stripe_price_id,
-                    is_active=is_active
+                    is_active=is_active,
+                    duration=duration
                 )
                 
                 # Handle structured features
@@ -268,14 +270,21 @@ def plan_create(request):
                             is_highlighted=str(idx) in feature_highlighted
                         )
                 
+                # Handle included workouts
+                workout_ids = request.POST.getlist('included_workouts')
+                if workout_ids:
+                    plan.included_workouts.set(workout_ids)
+                
                 messages.success(request, f'Plan "{plan.name}" created successfully!')
                 return redirect('staff:plan_list')
             except Exception as e:
                 messages.error(request, f'Error creating plan: {str(e)}')
     
+    all_workouts = Workout.objects.all().order_by('category', 'difficulty_level', 'title')
     return render(request, 'staff/plan_form.html', {
         'action': 'Create',
-        'existing_features': []
+        'existing_features': [],
+        'all_workouts': all_workouts
     })
 
 
@@ -293,6 +302,7 @@ def plan_edit(request, plan_id):
         plan.features = request.POST.get('features')  # Keep for backward compatibility
         plan.stripe_price_id = request.POST.get('stripe_price_id')
         plan.is_active = request.POST.get('is_active') == 'on'
+        plan.duration = request.POST.get('duration', '1_month')
         
         try:
             plan.save()
@@ -315,6 +325,10 @@ def plan_edit(request, plan_id):
                         is_highlighted=str(idx) in feature_highlighted
                     )
             
+            # Handle included workouts
+            workout_ids = request.POST.getlist('included_workouts')
+            plan.included_workouts.set(workout_ids)
+            
             messages.success(request, f'Plan "{plan.name}" updated successfully!')
             return redirect('staff:plan_list')
         except Exception as e:
@@ -322,11 +336,13 @@ def plan_edit(request, plan_id):
     
     # Get existing structured features
     existing_features = plan.plan_features.all() if plan else []
+    all_workouts = Workout.objects.all().order_by('category', 'difficulty_level', 'title')
     
     return render(request, 'staff/plan_form.html', {
         'plan': plan, 
         'action': 'Edit',
-        'existing_features': existing_features
+        'existing_features': existing_features,
+        'all_workouts': all_workouts
     })
 
 
@@ -430,6 +446,7 @@ def workout_create(request):
         difficulty = request.POST.get('difficulty_level')
         duration = request.POST.get('duration')
         category = request.POST.get('category')
+        is_free = request.POST.get('is_free') == 'on'
         
         if title and description and difficulty and duration and category:
             try:
@@ -440,6 +457,7 @@ def workout_create(request):
                     difficulty_level=difficulty,
                     duration=duration,
                     category=category,
+                    is_free=is_free,
                     thumbnail=request.FILES.get('thumbnail')
                 )
                 messages.success(request, f'Workout "{title}" created successfully!')
@@ -469,6 +487,7 @@ def workout_edit(request, workout_id):
         workout.difficulty_level = request.POST.get('difficulty_level')
         workout.duration = request.POST.get('duration')
         workout.category = request.POST.get('category')
+        workout.is_free = request.POST.get('is_free') == 'on'
         
         # Handle thumbnail upload
         if 'thumbnail' in request.FILES:

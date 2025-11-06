@@ -27,34 +27,100 @@
             <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"><i class="fas fa-filter mr-2"></i>Filter</button>
         </form>
         
-        {% if workouts %}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {% for workout in workouts %}
-            <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition bg-white">
-                {% if workout.thumbnail %}
-                    <img src="{{ workout.thumbnail.url }}" alt="{{ workout.title }}" class="w-full h-48 object-cover rounded-lg mb-4">
-                {% else %}
-                    <div class="w-full h-48 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg mb-4 flex items-center justify-center">
-                        <i class="fas fa-dumbbell text-white text-6xl opacity-50"></i>
+        <!-- Free Workouts Section -->
+        {% if free_workouts %}
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold mb-4 flex items-center">
+                <i class="fas fa-unlock mr-2 text-green-600"></i>Free Workouts
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for item in free_workouts %}
+                <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition bg-white">
+                    {% if item.workout.thumbnail %}
+                        <img src="{{ item.workout.thumbnail.url }}" alt="{{ item.workout.title }}" class="w-full h-48 object-cover rounded-lg mb-4">
+                    {% else %}
+                        <div class="w-full h-48 bg-gradient-to-br from-green-400 to-green-600 rounded-lg mb-4 flex items-center justify-center">
+                            <i class="fas fa-dumbbell text-white text-6xl opacity-50"></i>
+                        </div>
+                    {% endif %}
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-xl font-bold text-gray-900">{{ item.workout.title }}</h3>
+                        <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                            <i class="fas fa-unlock mr-1"></i>Free
+                        </span>
                     </div>
-                {% endif %}
-                <h3 class="text-xl font-bold mb-2 text-gray-900">{{ workout.title }}</h3>
-                <p class="text-gray-600 mb-4">{{ workout.description|truncatewords:15 }}</p>
-                <div class="flex flex-wrap gap-2 mb-4">
-                    <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold"><i class="fas fa-tag mr-1"></i>{{ workout.get_category_display }}</span>
-                    <span class="px-2 py-1 {% if workout.difficulty_level == 'beginner' %}bg-green-100 text-green-800{% elif workout.difficulty_level == 'intermediate' %}bg-yellow-100 text-yellow-800{% else %}bg-red-100 text-red-800{% endif %} rounded-full text-xs font-semibold">
-                        {% if workout.difficulty_level == 'beginner' %}<i class="fas fa-star mr-1"></i>{% elif workout.difficulty_level == 'intermediate' %}<i class="fas fa-star-half-alt mr-1"></i>{% else %}<i class="fas fa-fire mr-1"></i>{% endif %}
-                        {{ workout.get_difficulty_level_display }}
-                    </span>
+                    <p class="text-gray-600 mb-4">{{ item.workout.description|truncatewords:15 }}</p>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold"><i class="fas fa-tag mr-1"></i>{{ item.workout.get_category_display }}</span>
+                        <span class="px-2 py-1 {% if item.workout.difficulty_level == 'beginner' %}bg-green-100 text-green-800{% elif item.workout.difficulty_level == 'intermediate' %}bg-yellow-100 text-yellow-800{% else %}bg-red-100 text-red-800{% endif %} rounded-full text-xs font-semibold">
+                            {% if item.workout.difficulty_level == 'beginner' %}<i class="fas fa-star mr-1"></i>{% elif item.workout.difficulty_level == 'intermediate' %}<i class="fas fa-star-half-alt mr-1"></i>{% else %}<i class="fas fa-fire mr-1"></i>{% endif %}
+                            {{ item.workout.get_difficulty_level_display }}
+                        </span>
+                    </div>
+                    <div class="flex items-center text-sm text-gray-600 mb-4">
+                        <i class="fas fa-clock mr-2"></i>{{ item.workout.duration }} minutes
+                    </div>
+                    <a href="{% url 'workouts:workout_detail' item.workout.id %}" class="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition"><i class="fas fa-eye mr-2"></i>View Details</a>
                 </div>
-                <div class="flex items-center text-sm text-gray-600 mb-4">
-                    <i class="fas fa-clock mr-2"></i>{{ workout.duration }} minutes
-                </div>
-                <a href="{% url 'workouts:workout_detail' workout.id %}" class="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition"><i class="fas fa-eye mr-2"></i>View Details</a>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
-        {% else %}
+        {% endif %}
+        
+        <!-- Premium Workouts Section -->
+        {% if premium_workouts %}
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold mb-4 flex items-center">
+                <i class="fas fa-crown mr-2 text-yellow-600"></i>Premium Workouts
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for item in premium_workouts %}
+                <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition bg-white {% if not item.has_access %}opacity-75{% endif %}">
+                    {% if item.workout.thumbnail %}
+                        <img src="{{ item.workout.thumbnail.url }}" alt="{{ item.workout.title }}" class="w-full h-48 object-cover rounded-lg mb-4 {% if not item.has_access %}grayscale{% endif %}">
+                    {% else %}
+                        <div class="w-full h-48 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg mb-4 flex items-center justify-center {% if not item.has_access %}grayscale{% endif %}">
+                            <i class="fas fa-dumbbell text-white text-6xl opacity-50"></i>
+                        </div>
+                    {% endif %}
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-xl font-bold text-gray-900">{{ item.workout.title }}</h3>
+                        <span class="px-2 py-1 {% if item.has_access %}bg-blue-100 text-blue-800{% else %}bg-yellow-100 text-yellow-800{% endif %} rounded-full text-xs font-semibold">
+                            {% if item.has_access %}
+                                <i class="fas fa-check-circle mr-1"></i>Available
+                            {% else %}
+                                <i class="fas fa-lock mr-1"></i>Locked
+                            {% endif %}
+                        </span>
+                    </div>
+                    <p class="text-gray-600 mb-4">{{ item.workout.description|truncatewords:15 }}</p>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold"><i class="fas fa-tag mr-1"></i>{{ item.workout.get_category_display }}</span>
+                        <span class="px-2 py-1 {% if item.workout.difficulty_level == 'beginner' %}bg-green-100 text-green-800{% elif item.workout.difficulty_level == 'intermediate' %}bg-yellow-100 text-yellow-800{% else %}bg-red-100 text-red-800{% endif %} rounded-full text-xs font-semibold">
+                            {% if item.workout.difficulty_level == 'beginner' %}<i class="fas fa-star mr-1"></i>{% elif item.workout.difficulty_level == 'intermediate' %}<i class="fas fa-star-half-alt mr-1"></i>{% else %}<i class="fas fa-fire mr-1"></i>{% endif %}
+                            {{ item.workout.get_difficulty_level_display }}
+                        </span>
+                    </div>
+                    <div class="flex items-center text-sm text-gray-600 mb-4">
+                        <i class="fas fa-clock mr-2"></i>{{ item.workout.duration }} minutes
+                    </div>
+                    {% if item.has_access %}
+                        <a href="{% url 'workouts:workout_detail' item.workout.id %}" class="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition"><i class="fas fa-eye mr-2"></i>View Details</a>
+                    {% else %}
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-3">
+                            <p class="text-sm text-yellow-800 text-center">
+                                <i class="fas fa-lock mr-1"></i>Upgrade to access this workout
+                            </p>
+                        </div>
+                        <a href="{% url 'pricing' %}" class="block w-full bg-yellow-600 text-white text-center py-2 px-4 rounded-lg hover:bg-yellow-700 transition"><i class="fas fa-crown mr-2"></i>View Plans</a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if not free_workouts and not premium_workouts %}
         <p class="text-center text-gray-600">No workouts found.</p>
         {% endif %}
     </div>

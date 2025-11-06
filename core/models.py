@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 
 class CustomUser(AbstractUser):
@@ -17,11 +18,27 @@ class CustomUser(AbstractUser):
 
 class MembershipPlan(models.Model):
     """Membership subscription plans"""
+    DURATION_CHOICES = [
+        ('trial', 'Free Trial (1 week)'),
+        ('1_week', '1 Week'),
+        ('1_month', '1 Month'),
+        ('3_months', '3 Months'),
+        ('6_months', '6 Months'),
+        ('12_months', '12 Months'),
+    ]
+    
     name = models.CharField(max_length=100)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     features = models.TextField(help_text="List of features included in this plan (deprecated - use plan_features instead)")
     stripe_price_id = models.CharField(max_length=255, blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    duration = models.CharField(max_length=20, choices=DURATION_CHOICES, default='1_month', help_text="Subscription duration")
+    included_workouts = models.ManyToManyField(
+        'workouts.Workout',
+        related_name='membership_plans',
+        blank=True,
+        help_text="Workouts included with this membership plan"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -115,6 +132,34 @@ class Subscription(models.Model):
     @property
     def is_active(self):
         return self.status == 'active'
+    
+    def calculate_period_end(self, start_date=None):
+        """Calculate period end date based on plan duration"""
+        from datetime import timedelta
+        
+        if not self.plan:
+            return None
+        
+        if start_date is None:
+            start_date = self.current_period_start or timezone.now()
+        
+        duration_map = {
+            'trial': timedelta(days=7),
+            '1_week': timedelta(days=7),
+            '1_month': timedelta(days=30),
+            '3_months': timedelta(days=90),
+            '6_months': timedelta(days=180),
+            '12_months': timedelta(days=365),
+        }
+        
+        duration = duration_map.get(self.plan.duration, timedelta(days=30))
+        return start_date + duration
+    
+    def save(self, *args, **kwargs):
+        """Auto-calculate period_end if not set and plan has duration"""
+        if self.plan and self.current_period_start and not self.current_period_end:
+            self.current_period_end = self.calculate_period_end()
+        super().save(*args, **kwargs)
 
 
 class Trainer(models.Model):

@@ -71,13 +71,50 @@ def register(request):
 @login_required
 def dashboard(request):
     """Member dashboard"""
+    from django.utils import timezone
+    from datetime import timedelta
+    
     user = request.user
     
     # Get active subscription
     try:
-        subscription = Subscription.objects.filter(user=user, status='active').latest('created_at')
+        subscription = Subscription.objects.filter(
+            user=user, 
+            status__in=['active', 'trialing']
+        ).latest('created_at')
     except Subscription.DoesNotExist:
         subscription = None
+    
+    # Calculate subscription details if exists
+    subscription_details = None
+    if subscription and subscription.plan:
+        now = timezone.now()
+        start_date = subscription.current_period_start or subscription.created_at
+        end_date = subscription.current_period_end
+        
+        # Calculate remaining days
+        remaining_days = None
+        if end_date:
+            delta = end_date.date() - now.date()
+            remaining_days = max(0, delta.days)
+        
+        # Get included workouts
+        included_workouts = subscription.plan.included_workouts.all()
+        
+        # Next billing date (same as period end for now)
+        next_billing_date = end_date
+        
+        subscription_details = {
+            'plan_name': subscription.plan.name,
+            'status': subscription.status,
+            'duration': subscription.plan.get_duration_display(),
+            'start_date': start_date,
+            'end_date': end_date,
+            'remaining_days': remaining_days,
+            'next_billing_date': next_billing_date,
+            'included_workouts': included_workouts,
+            'included_workouts_count': included_workouts.count(),
+        }
     
     # Get upcoming bookings
     today = datetime.now().date()
@@ -102,6 +139,7 @@ def dashboard(request):
     
     context = {
         'subscription': subscription,
+        'subscription_details': subscription_details,
         'upcoming_bookings': upcoming_bookings,
         'streak': streak,
         'total_points': total_points,

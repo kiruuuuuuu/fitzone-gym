@@ -8,21 +8,94 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 class="text-4xl font-bold mb-8">Welcome back, {{ user.get_full_name|default:user.username }}!</h1>
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <!-- Subscription Status -->
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                <h3 class="text-lg font-semibold mb-2"><i class="fas fa-id-card mr-2"></i>Subscription Status</h3>
-                {% if subscription %}
-                    <p class="text-2xl font-bold text-blue-600">{{ subscription.plan.name }}</p>
-                    <p class="text-sm text-gray-600 mt-2">Status: <span class="font-semibold">{{ subscription.status|capfirst }}</span></p>
-                    {% if subscription.current_period_end %}
-                        <p class="text-sm text-gray-600">Renews: {{ subscription.current_period_end|date:"M d, Y" }}</p>
-                    {% endif %}
-                {% else %}
-                    <p class="text-gray-600">No active subscription</p>
-                    <a href="{% url 'pricing' %}" class="mt-4 inline-block bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">View Plans</a>
-                {% endif %}
+        <!-- My Subscription Section -->
+        {% if subscription_details %}
+        <div class="mb-8 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6">
+            <h2 class="text-2xl font-bold mb-4 flex items-center">
+                <i class="fas fa-id-card mr-3 text-blue-600"></i>My Subscription
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <div class="bg-white rounded-lg p-4 mb-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-xl font-bold text-gray-900">{{ subscription_details.plan_name }}</h3>
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold 
+                                {% if subscription_details.status == 'active' %}bg-green-100 text-green-800
+                                {% elif subscription_details.status == 'trialing' %}bg-blue-100 text-blue-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ subscription_details.status|capfirst }}
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-2">
+                            <i class="fas fa-calendar-alt mr-2"></i>Duration: <span class="font-semibold">{{ subscription_details.duration }}</span>
+                        </p>
+                        <p class="text-sm text-gray-600 mb-2">
+                            <i class="fas fa-play-circle mr-2"></i>Started: <span class="font-semibold">{{ subscription_details.start_date|date:"M d, Y" }}</span>
+                        </p>
+                        <p class="text-sm text-gray-600 mb-2">
+                            <i class="fas fa-stop-circle mr-2"></i>Ends: <span class="font-semibold">{{ subscription_details.end_date|date:"M d, Y" }}</span>
+                        </p>
+                        {% if subscription_details.remaining_days is not None %}
+                        <p class="text-sm text-gray-600 mb-2">
+                            <i class="fas fa-hourglass-half mr-2"></i>Days Remaining: <span class="font-semibold text-orange-600">{{ subscription_details.remaining_days }} days</span>
+                        </p>
+                        {% endif %}
+                        {% if subscription_details.next_billing_date %}
+                        <p class="text-sm text-gray-600">
+                            <i class="fas fa-credit-card mr-2"></i>Next Billing: <span class="font-semibold">{{ subscription_details.next_billing_date|date:"M d, Y" }}</span>
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    <div class="bg-white rounded-lg p-4">
+                        <h4 class="font-semibold mb-3 flex items-center">
+                            <i class="fas fa-dumbbell mr-2 text-blue-600"></i>Included Workouts
+                        </h4>
+                        {% if subscription_details.included_workouts_count > 0 %}
+                            <p class="text-sm text-gray-600 mb-3">You have access to <span class="font-bold text-blue-600">{{ subscription_details.included_workouts_count }}</span> premium workout{{ subscription_details.included_workouts_count|pluralize }}:</p>
+                            <div class="max-h-48 overflow-y-auto space-y-2">
+                                {% for workout in subscription_details.included_workouts|slice:":10" %}
+                                <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                    <span class="text-sm font-medium">{{ workout.title }}</span>
+                                    <span class="text-xs text-gray-500">{{ workout.duration }} min</span>
+                                </div>
+                                {% endfor %}
+                                {% if subscription_details.included_workouts_count > 10 %}
+                                <p class="text-xs text-gray-500 text-center">... and {{ subscription_details.included_workouts_count|add:"-10" }} more</p>
+                                {% endif %}
+                            </div>
+                            <a href="{% url 'workouts:library' %}" class="mt-3 block text-center text-sm text-blue-600 hover:text-blue-800">
+                                <i class="fas fa-arrow-right mr-1"></i>View All Workouts
+                            </a>
+                        {% else %}
+                            <p class="text-sm text-gray-600">No workouts included in this plan.</p>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
+            <div class="mt-4 flex gap-4">
+                <a href="{% url 'payments:my_subscription' %}" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                    <i class="fas fa-cog mr-2"></i>Manage Subscription
+                </a>
+                <a href="{% url 'pricing' %}" class="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition">
+                    <i class="fas fa-eye mr-2"></i>View Plans
+                </a>
+            </div>
+        </div>
+        {% else %}
+        <div class="mb-8 bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
+            <h2 class="text-2xl font-bold mb-2 flex items-center justify-center">
+                <i class="fas fa-id-card mr-3 text-blue-600"></i>No Active Subscription
+            </h2>
+            <p class="text-gray-600 mb-4">Subscribe to a plan to access premium workouts and features!</p>
+            <a href="{% url 'pricing' %}" class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                <i class="fas fa-arrow-right mr-2"></i>View Plans
+            </a>
+        </div>
+        {% endif %}
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             
             <!-- Streak -->
             <div class="bg-green-50 border border-green-200 rounded-lg p-6">

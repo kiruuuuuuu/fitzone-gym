@@ -17,6 +17,15 @@ class Workout(models.Model):
     ]
     
     CATEGORY_CHOICES = [
+        # Muscle Groups
+        ('chest', 'Chest'),
+        ('shoulder', 'Shoulder'),
+        ('back', 'Back'),
+        ('legs', 'Legs'),
+        ('arms', 'Arms'),
+        ('abs', 'Abs'),
+        ('full_body', 'Full Body'),
+        # Exercise Types
         ('cardio', 'Cardio'),
         ('strength', 'Strength Training'),
         ('flexibility', 'Flexibility'),
@@ -33,14 +42,21 @@ class Workout(models.Model):
     difficulty_level = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES, default='beginner')
     duration = models.IntegerField(help_text="Duration in minutes")
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    is_free = models.BooleanField(default=False, help_text="If checked, this workout is free for all users")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         ordering = ['category', 'difficulty_level', 'title']
     
+    @property
+    def is_premium(self):
+        """Backward compatibility property"""
+        return not self.is_free
+    
     def __str__(self):
-        return self.title
+        status = " (Free)" if self.is_free else " (Premium)"
+        return f"{self.title}{status}"
 
 
 class UserWorkoutCompletion(models.Model):
