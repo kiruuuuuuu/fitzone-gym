@@ -239,8 +239,7 @@ def plan_create(request):
     if request.method == 'POST':
         name = request.POST.get('name')
         price = request.POST.get('price')
-        features = request.POST.get('features')  # Keep for backward compatibility
-        stripe_price_id = request.POST.get('stripe_price_id')
+        features = request.POST.get('features', '')  # Keep for backward compatibility
         is_active = request.POST.get('is_active') == 'on'
         duration = request.POST.get('duration', '1_month')
         
@@ -250,7 +249,6 @@ def plan_create(request):
                     name=name,
                     price=price,
                     features=features,  # Keep old field for backward compatibility
-                    stripe_price_id=stripe_price_id,
                     is_active=is_active,
                     duration=duration
                 )
@@ -299,8 +297,7 @@ def plan_edit(request, plan_id):
     if request.method == 'POST':
         plan.name = request.POST.get('name')
         plan.price = request.POST.get('price')
-        plan.features = request.POST.get('features')  # Keep for backward compatibility
-        plan.stripe_price_id = request.POST.get('stripe_price_id')
+        plan.features = request.POST.get('features', '')  # Keep for backward compatibility
         plan.is_active = request.POST.get('is_active') == 'on'
         plan.duration = request.POST.get('duration', '1_month')
         

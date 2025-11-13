@@ -65,8 +65,22 @@ def pricing(request):
 
 
 def schedule(request):
-    """Class schedule page"""
-    classes = GymClass.objects.filter(is_active=True).order_by('schedule_time', 'schedule_days')
+    """Class schedule page - shows upcoming class schedules"""
+    from django.utils import timezone
+    from bookings.models import GymClass, ClassSchedule
+    
+    today = timezone.now().date()
+    
+    # Get active classes with their upcoming schedules
+    classes = GymClass.objects.filter(is_active=True).prefetch_related('schedules', 'trainer__user').order_by('name')
+    
+    # Get upcoming schedules for each class
+    for gym_class in classes:
+        gym_class.upcoming_schedules = gym_class.schedules.filter(
+            class_date__gte=today,
+            is_active=True
+        ).order_by('class_date', 'class_time')[:3]  # Show up to 3 upcoming schedules
+    
     return render(request, 'schedule.html', {'classes': classes})
 
 
