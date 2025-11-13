@@ -3,45 +3,169 @@
 {% block title %}My Bookings - FitZone Gym{% endblock %}
 
 {% block content %}
-<div class="bg-white py-16">
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 class="text-4xl font-bold mb-8">My Bookings</h1>
+        <div class="text-center mb-12">
+            <h1 class="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4 flex items-center justify-center">
+                <i class="fas fa-calendar-alt mr-4 text-blue-600"></i>My Bookings
+            </h1>
+            <p class="text-gray-600 text-lg">Manage your class bookings</p>
+        </div>
         
-        <h2 class="text-2xl font-semibold mb-4">Upcoming Bookings</h2>
-        {% if upcoming %}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                {% for booking in upcoming %}
-                <div class="border border-gray-200 rounded-lg p-6">
-                    <h3 class="text-xl font-bold mb-2">{{ booking.gym_class.name }}</h3>
-                    <p class="text-gray-600 mb-2">{{ booking.booking_date|date:"F d, Y" }} at {{ booking.gym_class.schedule_time|time:"g:i A" }}</p>
-                    {% if booking.gym_class.trainer %}
-                        <p class="text-sm text-gray-500">Trainer: {{ booking.gym_class.trainer.user.get_full_name|default:booking.gym_class.trainer.user.username }}</p>
-                    {% endif %}
-                    <a href="{% url 'bookings:cancel_booking' booking.id %}" class="mt-4 inline-block bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition" onclick="return confirm('Are you sure you want to cancel this booking?')">Cancel</a>
+        <!-- Upcoming Bookings -->
+        <div class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 flex items-center">
+                <i class="fas fa-arrow-up text-green-600 mr-3"></i>Upcoming Bookings
+            </h2>
+            {% if upcoming %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for booking in upcoming %}
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                        <!-- Status Header -->
+                        <div class="bg-gradient-to-r from-green-500 to-emerald-600 p-4 text-white">
+                            <div class="flex items-center justify-between">
+                                <span class="px-3 py-1 bg-white bg-opacity-20 rounded-full text-sm font-semibold">
+                                    <i class="fas fa-check-circle mr-1"></i>Confirmed
+                                </span>
+                                {% if booking.gym_class.is_paid %}
+                                <span class="px-3 py-1 bg-yellow-400 text-yellow-900 rounded-full text-xs font-bold">
+                                    <i class="fas fa-rupee-sign mr-1"></i>Paid
+                                </span>
+                                {% else %}
+                                <span class="px-3 py-1 bg-green-400 text-green-900 rounded-full text-xs font-bold">
+                                    <i class="fas fa-gift mr-1"></i>Free
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Booking Details -->
+                        <div class="p-6 space-y-4">
+                            <h3 class="text-2xl font-bold text-gray-800">{{ booking.gym_class.name }}</h3>
+                            
+                            <div class="space-y-3">
+                                <div class="flex items-center text-gray-700">
+                                    <i class="fas fa-calendar text-blue-600 w-6"></i>
+                                    <span class="ml-3">
+                                        <strong>Date:</strong> {{ booking.class_schedule.class_date|date:"F d, Y"|default:booking.booking_date|date:"F d, Y" }}
+                                    </span>
+                                </div>
+                                
+                                <div class="flex items-center text-gray-700">
+                                    <i class="fas fa-clock text-purple-600 w-6"></i>
+                                    <span class="ml-3">
+                                        <strong>Time:</strong> 
+                                        {% if booking.class_schedule %}
+                                            {{ booking.class_schedule.class_time|time:"g:i A" }}
+                                        {% else %}
+                                            {{ booking.gym_class.schedule_time|time:"g:i A" }}
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                
+                                <div class="flex items-center text-gray-700">
+                                    <i class="fas fa-map-marker-alt text-red-600 w-6"></i>
+                                    <span class="ml-3">
+                                        <strong>Location:</strong> 
+                                        {% if booking.gym_class.location_type == 'online' %}
+                                            <span class="text-purple-600 font-semibold"><i class="fas fa-video mr-1"></i>Online</span>
+                                        {% else %}
+                                            <span class="text-blue-600 font-semibold"><i class="fas fa-building mr-1"></i>Offline</span>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                
+                                {% if booking.gym_class.location_details %}
+                                <div class="bg-gray-50 p-3 rounded-lg text-sm text-gray-600">
+                                    <i class="fas fa-info-circle text-blue-500 mr-2"></i>{{ booking.gym_class.location_details }}
+                                </div>
+                                {% endif %}
+                                
+                                {% if booking.gym_class.trainer %}
+                                <div class="flex items-center text-gray-700">
+                                    <i class="fas fa-user-tie text-indigo-600 w-6"></i>
+                                    <span class="ml-3">
+                                        <strong>Trainer:</strong> {{ booking.gym_class.trainer.user.get_full_name|default:booking.gym_class.trainer.user.username }}
+                                    </span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="pt-4 border-t border-gray-200">
+                                <a href="{% url 'bookings:cancel_booking' booking.id %}" 
+                                   class="block w-full text-center px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all duration-200 font-semibold transform hover:scale-105"
+                                   onclick="return confirm('Are you sure you want to cancel this booking?')">
+                                    <i class="fas fa-times mr-2"></i>Cancel Booking
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="text-gray-600 mb-8">No upcoming bookings. <a href="{% url 'bookings:book_class' %}" class="text-blue-600 hover:underline">Book a class</a></p>
-        {% endif %}
+            {% else %}
+                <div class="bg-white rounded-2xl shadow-lg p-12 text-center">
+                    <i class="fas fa-calendar-plus text-6xl text-gray-400 mb-4"></i>
+                    <p class="text-xl text-gray-600 mb-4">No upcoming bookings</p>
+                    <a href="{% url 'bookings:book_class' %}" class="inline-block px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-semibold">
+                        <i class="fas fa-plus mr-2"></i>Book a Class
+                    </a>
+                </div>
+            {% endif %}
+        </div>
         
-        <h2 class="text-2xl font-semibold mb-4">Past Bookings</h2>
-        {% if past %}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {% for booking in past %}
-                <div class="border border-gray-200 rounded-lg p-6 bg-gray-50">
-                    <h3 class="text-xl font-bold mb-2">{{ booking.gym_class.name }}</h3>
-                    <p class="text-gray-600 mb-2">{{ booking.booking_date|date:"F d, Y" }}</p>
-                    <p class="text-sm">
-                        <span class="px-2 py-1 bg-gray-200 rounded">{{ booking.status|capfirst }}</span>
-                    </p>
+        <!-- Past Bookings -->
+        <div>
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 flex items-center">
+                <i class="fas fa-history text-gray-600 mr-3"></i>Past Bookings
+            </h2>
+            {% if past %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for booking in past %}
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden opacity-75">
+                        <!-- Status Header -->
+                        <div class="{% if booking.status == 'completed' %}bg-gradient-to-r from-green-500 to-emerald-600{% elif booking.status == 'cancelled' %}bg-gradient-to-r from-red-500 to-red-600{% else %}bg-gradient-to-r from-gray-500 to-gray-600{% endif %} p-4 text-white">
+                            <div class="flex items-center justify-between">
+                                <span class="px-3 py-1 bg-white bg-opacity-20 rounded-full text-sm font-semibold capitalize">
+                                    {% if booking.status == 'completed' %}
+                                        <i class="fas fa-check-circle mr-1"></i>
+                                    {% elif booking.status == 'cancelled' %}
+                                        <i class="fas fa-times-circle mr-1"></i>
+                                    {% else %}
+                                        <i class="fas fa-clock mr-1"></i>
+                                    {% endif %}
+                                    {{ booking.status }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Booking Details -->
+                        <div class="p-6 space-y-4">
+                            <h3 class="text-2xl font-bold text-gray-800">{{ booking.gym_class.name }}</h3>
+                            
+                            <div class="space-y-2">
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-calendar text-gray-500 w-6"></i>
+                                    <span class="ml-3">{{ booking.class_schedule.class_date|date:"F d, Y"|default:booking.booking_date|date:"F d, Y" }}</span>
+                                </div>
+                                
+                                {% if booking.class_schedule %}
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-clock text-gray-500 w-6"></i>
+                                    <span class="ml-3">{{ booking.class_schedule.class_time|time:"g:i A" }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="text-gray-600">No past bookings.</p>
-        {% endif %}
+            {% else %}
+                <div class="bg-white rounded-2xl shadow-lg p-12 text-center">
+                    <i class="fas fa-history text-6xl text-gray-400 mb-4"></i>
+                    <p class="text-xl text-gray-600">No past bookings</p>
+                </div>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endblock %}
-

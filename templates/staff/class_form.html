@@ -4,109 +4,392 @@
 {% block title %}{{ action }} Gym Class{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold">{{ action }} Gym Class</h1>
-        <p class="text-gray-600">Create or edit a group fitness class</p>
-    </div>
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8">
+    <div class="container mx-auto px-4">
+        <div class="mb-8 text-center">
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                <i class="fas fa-dumbbell mr-3 text-blue-600"></i>{{ action }} Gym Class
+            </h1>
+            <p class="text-gray-600">Create or edit a group fitness class with scheduling options</p>
+        </div>
 
-    <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
-        <form method="POST">
-            {% csrf_token %}
-            
-            <div class="mb-6">
-                <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
-                    Class Name *
-                </label>
-                <input type="text" id="name" name="name" required
-                       value="{% if gym_class %}{{ gym_class.name }}{% endif %}"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-            </div>
-            
-            <div class="mb-6">
-                <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
-                    Description *
-                </label>
-                <textarea id="description" name="description" rows="4" required
-                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">{% if gym_class %}{{ gym_class.description }}{% endif %}</textarea>
-            </div>
-            
-            <div class="mb-6">
-                <label for="trainer" class="block text-sm font-medium text-gray-700 mb-2">
-                    Trainer
-                </label>
-                <select id="trainer" name="trainer"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    <option value="">-- No Trainer --</option>
-                    {% for trainer in trainers %}
-                    <option value="{{ trainer.id }}" {% if gym_class.trainer and gym_class.trainer.id == trainer.id %}selected{% endif %}>
-                        {{ trainer.user.get_full_name|default:trainer.user.username }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div>
-                    <label for="duration" class="block text-sm font-medium text-gray-700 mb-2">
-                        Duration (min) *
-                    </label>
-                    <input type="number" id="duration" name="duration" required
-                           value="{% if gym_class %}{{ gym_class.duration }}{% endif %}"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                </div>
+        <div class="max-w-4xl mx-auto">
+            <form method="POST" id="classForm" class="bg-white rounded-2xl shadow-xl p-8 space-y-8">
+                {% csrf_token %}
                 
-                <div>
-                    <label for="max_capacity" class="block text-sm font-medium text-gray-700 mb-2">
-                        Max Capacity *
-                    </label>
-                    <input type="number" id="max_capacity" name="max_capacity" required
-                           value="{% if gym_class %}{{ gym_class.max_capacity }}{% endif %}"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <!-- Progress Indicator -->
+                <div class="mb-8">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-blue-600">Step 1 of 3</span>
+                        <span class="text-sm text-gray-500">Basic Information</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full" style="width: 33%"></div>
+                    </div>
                 </div>
-                
-                <div>
-                    <label for="schedule_time" class="block text-sm font-medium text-gray-700 mb-2">
-                        Time *
-                    </label>
-                    <input type="time" id="schedule_time" name="schedule_time" required
-                           value="{% if gym_class %}{{ gym_class.schedule_time|time:'H:i' }}{% endif %}"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+
+                <!-- Basic Information Section -->
+                <div class="border-b border-gray-200 pb-8">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-info-circle text-blue-600 mr-3"></i>Basic Information
+                    </h2>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-tag mr-2 text-blue-500"></i>Class Name *
+                            </label>
+                            <input type="text" id="name" name="name" required
+                                   value="{% if gym_class %}{{ gym_class.name }}{% endif %}"
+                                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                        </div>
+                        
+                        <div>
+                            <label for="description" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-align-left mr-2 text-blue-500"></i>Description *
+                            </label>
+                            <textarea id="description" name="description" rows="4" required
+                                      class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">{% if gym_class %}{{ gym_class.description }}{% endif %}</textarea>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="trainer" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-user-tie mr-2 text-blue-500"></i>Trainer
+                                </label>
+                                <select id="trainer" name="trainer"
+                                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                                    <option value="">-- No Trainer --</option>
+                                    {% for trainer in trainers %}
+                                    <option value="{{ trainer.id }}" {% if gym_class.trainer and gym_class.trainer.id == trainer.id %}selected{% endif %}>
+                                        {{ trainer.user.get_full_name|default:trainer.user.username }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="duration" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <i class="fas fa-clock mr-2 text-blue-500"></i>Duration (minutes) *
+                                </label>
+                                <input type="number" id="duration" name="duration" required min="1"
+                                       value="{% if gym_class %}{{ gym_class.duration }}{% endif %}"
+                                       class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="max_capacity" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-users mr-2 text-blue-500"></i>Max Capacity *
+                            </label>
+                            <input type="number" id="max_capacity" name="max_capacity" required min="1"
+                                   value="{% if gym_class %}{{ gym_class.max_capacity }}{% endif %}"
+                                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                        </div>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="mb-6">
-                <label for="schedule_days" class="block text-sm font-medium text-gray-700 mb-2">
-                    Days (comma-separated) *
-                </label>
-                <input type="text" id="schedule_days" name="schedule_days" required
-                       value="{% if gym_class %}{{ gym_class.schedule_days }}{% endif %}"
-                       placeholder="monday,wednesday,friday"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                <p class="text-xs text-gray-500 mt-1">Example: monday,wednesday,friday or tuesday,thursday</p>
-            </div>
-            
-            <div class="mb-6">
-                <div class="flex items-center">
+
+                <!-- Payment & Location Section -->
+                <div class="border-b border-gray-200 pb-8">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-money-bill-wave text-green-600 mr-3"></i>Payment & Location
+                    </h2>
+                    
+                    <div class="space-y-6">
+                        <!-- Payment Type -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-3">
+                                <i class="fas fa-credit-card mr-2 text-green-500"></i>Class Type *
+                            </label>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <label class="relative flex items-center p-4 border-2 border-gray-300 rounded-xl cursor-pointer hover:border-green-500 transition-all duration-200 payment-option">
+                                    <input type="radio" name="is_paid" value="false" 
+                                           {% if not gym_class or not gym_class.is_paid %}checked{% endif %}
+                                           class="sr-only payment-radio">
+                                    <div class="flex items-center w-full">
+                                        <div class="flex-shrink-0">
+                                            <i class="fas fa-gift text-3xl text-green-600 mr-4"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-lg font-semibold text-gray-800">Free Class</div>
+                                            <div class="text-sm text-gray-600">No payment required</div>
+                                        </div>
+                                    </div>
+                                </label>
+                                
+                                <label class="relative flex items-center p-4 border-2 border-gray-300 rounded-xl cursor-pointer hover:border-yellow-500 transition-all duration-200 payment-option">
+                                    <input type="radio" name="is_paid" value="true" 
+                                           {% if gym_class and gym_class.is_paid %}checked{% endif %}
+                                           class="sr-only payment-radio">
+                                    <div class="flex items-center w-full">
+                                        <div class="flex-shrink-0">
+                                            <i class="fas fa-rupee-sign text-3xl text-yellow-600 mr-4"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-lg font-semibold text-gray-800">Paid Class</div>
+                                            <div class="text-sm text-gray-600">Requires payment</div>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Price Field (conditional) -->
+                        <div id="priceField" style="display: {% if gym_class and gym_class.is_paid %}block{% else %}none{% endif %};">
+                            <label for="price" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-rupee-sign mr-2 text-yellow-500"></i>Price (₹) *
+                            </label>
+                            <input type="number" id="price" name="price" step="0.01" min="0"
+                                   value="{% if gym_class and gym_class.price %}{{ gym_class.price }}{% endif %}"
+                                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-200">
+                        </div>
+                        
+                        <!-- Location Type -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-3">
+                                <i class="fas fa-map-marker-alt mr-2 text-purple-500"></i>Location Type *
+                            </label>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <label class="relative flex items-center p-4 border-2 border-gray-300 rounded-xl cursor-pointer hover:border-purple-500 transition-all duration-200 location-option">
+                                    <input type="radio" name="location_type" value="online" 
+                                           {% if gym_class and gym_class.location_type == 'online' %}checked{% elif not gym_class %}checked{% endif %}
+                                           class="sr-only location-radio">
+                                    <div class="flex items-center w-full">
+                                        <div class="flex-shrink-0">
+                                            <i class="fas fa-video text-3xl text-purple-600 mr-4"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-lg font-semibold text-gray-800">Online</div>
+                                            <div class="text-sm text-gray-600">Virtual class</div>
+                                        </div>
+                                    </div>
+                                </label>
+                                
+                                <label class="relative flex items-center p-4 border-2 border-gray-300 rounded-xl cursor-pointer hover:border-blue-500 transition-all duration-200 location-option">
+                                    <input type="radio" name="location_type" value="offline" 
+                                           {% if gym_class and gym_class.location_type == 'offline' %}checked{% endif %}
+                                           class="sr-only location-radio">
+                                    <div class="flex items-center w-full">
+                                        <div class="flex-shrink-0">
+                                            <i class="fas fa-building text-3xl text-blue-600 mr-4"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-lg font-semibold text-gray-800">Offline</div>
+                                            <div class="text-sm text-gray-600">Physical location</div>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Location Details -->
+                        <div>
+                            <label for="location_details" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-info-circle mr-2 text-purple-500"></i>Location Details
+                            </label>
+                            <textarea id="location_details" name="location_details" rows="3"
+                                      placeholder="Enter address, zoom link, or other location information"
+                                      class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">{% if gym_class %}{{ gym_class.location_details }}{% endif %}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Schedule Section -->
+                <div class="pb-8">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-calendar-alt text-indigo-600 mr-3"></i>Class Schedule
+                        <span class="ml-2 text-sm font-normal text-gray-500">(Max 3 sessions)</span>
+                    </h2>
+                    
+                    <div id="scheduleContainer" class="space-y-4">
+                        <!-- Schedule entries will be added here dynamically -->
+                    </div>
+                    
+                    <button type="button" id="addScheduleBtn" 
+                            class="mt-4 px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all duration-200 flex items-center">
+                        <i class="fas fa-plus mr-2"></i>Add Schedule
+                    </button>
+                </div>
+
+                <!-- Active Status -->
+                <div class="flex items-center p-4 bg-blue-50 rounded-xl">
                     <input type="checkbox" id="is_active" name="is_active" 
                            {% if gym_class.is_active or not gym_class %}checked{% endif %}
-                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                    <label for="is_active" class="ml-2 block text-sm text-gray-900">
-                        Is Active (Class is available for booking)
+                           class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    <label for="is_active" class="ml-3 block text-sm font-semibold text-gray-900">
+                        <i class="fas fa-check-circle mr-2 text-green-600"></i>Class is active and available for booking
                     </label>
                 </div>
-            </div>
-            
-            <div class="flex gap-4">
-                <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition">
-                    {{ action }} Class
-                </button>
-                <a href="{% url 'staff:class_list' %}" class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg hover:bg-gray-300 transition text-center">
-                    Cancel
-                </a>
-            </div>
-        </form>
+                
+                <!-- Form Actions -->
+                <div class="flex gap-4 pt-6 border-t border-gray-200">
+                    <button type="submit" class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                        <i class="fas fa-save mr-2"></i>{{ action }} Class
+                    </button>
+                    <a href="{% url 'staff:class_list' %}" class="flex-1 bg-gray-200 text-gray-800 py-4 rounded-xl hover:bg-gray-300 transition-all duration-200 text-center font-semibold text-lg">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
-{% endblock %}
 
+<style>
+.payment-option input:checked + div,
+.location-option input:checked + div {
+    border-color: currentColor;
+}
+
+.payment-option input[value="false"]:checked ~ div,
+.payment-option input[value="false"]:checked + div {
+    border-color: #10b981;
+    background-color: #f0fdf4;
+}
+
+.payment-option input[value="true"]:checked ~ div,
+.payment-option input[value="true"]:checked + div {
+    border-color: #eab308;
+    background-color: #fefce8;
+}
+
+.location-option input[value="online"]:checked ~ div,
+.location-option input[value="online"]:checked + div {
+    border-color: #9333ea;
+    background-color: #faf5ff;
+}
+
+.location-option input[value="offline"]:checked ~ div,
+.location-option input[value="offline"]:checked + div {
+    border-color: #2563eb;
+    background-color: #eff6ff;
+}
+</style>
+
+<script>
+let scheduleCount = 0;
+const maxSchedules = 3;
+
+// Initialize with existing schedules if editing
+{% if gym_class %}
+    {% for schedule in gym_class.schedules.all %}
+        addScheduleEntry('{{ schedule.class_date|date:"Y-m-d" }}', '{{ schedule.class_time|time:"H:i" }}');
+    {% endfor %}
+{% endif %}
+
+// If no existing schedules, add one empty entry
+if (scheduleCount === 0) {
+    addScheduleEntry();
+}
+
+function addScheduleEntry(date = '', time = '') {
+    if (scheduleCount >= maxSchedules) {
+        alert('Maximum ' + maxSchedules + ' schedules allowed');
+        return;
+    }
+    
+    const container = document.getElementById('scheduleContainer');
+    const entry = document.createElement('div');
+    entry.className = 'schedule-entry p-4 border-2 border-gray-200 rounded-xl bg-gray-50';
+    entry.innerHTML = `
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-gray-800 flex items-center">
+                <i class="fas fa-calendar-check text-indigo-600 mr-2"></i>Schedule ${scheduleCount + 1}
+            </h3>
+            <button type="button" class="remove-schedule text-red-600 hover:text-red-800 transition-colors">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-calendar mr-2 text-indigo-500"></i>Date *
+                </label>
+                <input type="date" name="schedule_date[]" value="${date}" required
+                       min="${new Date().toISOString().split('T')[0]}"
+                       class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-clock mr-2 text-indigo-500"></i>Time *
+                </label>
+                <input type="time" name="schedule_time[]" value="${time}" required
+                       class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(entry);
+    scheduleCount++;
+    
+    // Update add button state
+    updateAddButton();
+    
+    // Add remove functionality
+    entry.querySelector('.remove-schedule').addEventListener('click', function() {
+        entry.remove();
+        scheduleCount--;
+        updateAddButton();
+        updateScheduleNumbers();
+    });
+}
+
+function updateAddButton() {
+    const btn = document.getElementById('addScheduleBtn');
+    if (scheduleCount >= maxSchedules) {
+        btn.disabled = true;
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
+    } else {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+}
+
+function updateScheduleNumbers() {
+    const entries = document.querySelectorAll('.schedule-entry');
+    entries.forEach((entry, index) => {
+        entry.querySelector('h3').innerHTML = `<i class="fas fa-calendar-check text-indigo-600 mr-2"></i>Schedule ${index + 1}`;
+    });
+}
+
+// Payment type toggle
+document.querySelectorAll('input[name="is_paid"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const priceField = document.getElementById('priceField');
+        const priceInput = document.getElementById('price');
+        if (this.value === 'true') {
+            priceField.style.display = 'block';
+            priceInput.required = true;
+        } else {
+            priceField.style.display = 'none';
+            priceInput.required = false;
+            priceInput.value = '';
+        }
+    });
+});
+
+// Add schedule button
+document.getElementById('addScheduleBtn').addEventListener('click', function() {
+    addScheduleEntry();
+});
+
+// Form validation
+document.getElementById('classForm').addEventListener('submit', function(e) {
+    if (scheduleCount === 0) {
+        e.preventDefault();
+        alert('Please add at least one schedule');
+        return false;
+    }
+    
+    const isPaid = document.querySelector('input[name="is_paid"]:checked').value === 'true';
+    if (isPaid) {
+        const price = document.getElementById('price').value;
+        if (!price || parseFloat(price) <= 0) {
+            e.preventDefault();
+            alert('Please enter a valid price for paid classes');
+            return false;
+        }
+    }
+});
+</script>
+{% endblock %}

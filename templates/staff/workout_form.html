@@ -4,156 +4,231 @@
 {% block title %}{{ action }} Workout{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold">{{ action }} Workout</h1>
-        <p class="text-gray-600">Add or edit a workout in the library</p>
-    </div>
-
-    <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
-        <form method="POST" enctype="multipart/form-data">
-            {% csrf_token %}
-            
-            <div class="mb-6">
-                <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
-                    Workout Title *
-                </label>
-                <input type="text" id="title" name="title" required
-                       value="{% if workout %}{{ workout.title }}{% endif %}"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+<div class="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 py-8">
+    <div class="container mx-auto px-4">
+        {% if step == 'category' %}
+        <!-- Step 1: Category Selection -->
+        <div class="max-w-5xl mx-auto">
+            <div class="text-center mb-12">
+                <h1 class="text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-2">
+                    <i class="fas fa-dumbbell mr-3 text-green-600"></i>Select Category
+                </h1>
+                <p class="text-gray-600 text-lg">Choose a category to create workouts</p>
             </div>
             
-            <div class="mb-6">
-                <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
-                    Description *
-                </label>
-                <textarea id="description" name="description" rows="4" required
-                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">{% if workout %}{{ workout.description }}{% endif %}</textarea>
+            <div class="bg-white rounded-2xl shadow-xl p-8">
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {% for value, label in categories %}
+                    <a href="?category={{ value }}" 
+                       class="group relative bg-gradient-to-br from-green-50 to-blue-50 p-6 rounded-xl border-2 border-gray-200 hover:border-green-500 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-lg text-center">
+                        <div class="text-4xl mb-3 text-green-600 group-hover:scale-110 transition-transform duration-300">
+                            {% if value == 'chest' %}<i class="fas fa-heart"></i>
+                            {% elif value == 'shoulder' %}<i class="fas fa-mountain"></i>
+                            {% elif value == 'back' %}<i class="fas fa-arrow-up"></i>
+                            {% elif value == 'legs' %}<i class="fas fa-walking"></i>
+                            {% elif value == 'arms' %}<i class="fas fa-hand-paper"></i>
+                            {% elif value == 'abs' %}<i class="fas fa-square"></i>
+                            {% elif value == 'full_body' %}<i class="fas fa-user"></i>
+                            {% elif value == 'cardio' %}<i class="fas fa-running"></i>
+                            {% elif value == 'strength' %}<i class="fas fa-dumbbell"></i>
+                            {% elif value == 'flexibility' %}<i class="fas fa-yin-yang"></i>
+                            {% elif value == 'hiit' %}<i class="fas fa-fire"></i>
+                            {% elif value == 'yoga' %}<i class="fas fa-om"></i>
+                            {% elif value == 'pilates' %}<i class="fas fa-spa"></i>
+                            {% else %}<i class="fas fa-dumbbell"></i>
+                            {% endif %}
+                        </div>
+                        <h3 class="font-bold text-gray-800 group-hover:text-green-600 transition-colors">{{ label }}</h3>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        {% else %}
+        <!-- Step 2: Bulk Workout Creation -->
+        <div class="max-w-6xl mx-auto">
+            <div class="mb-8 text-center">
+                <h1 class="text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-2">
+                    <i class="fas fa-plus-circle mr-3 text-green-600"></i>Create Workouts
+                </h1>
+                <p class="text-gray-600 text-lg">Category: <span class="font-semibold text-green-600">{{ category_name }}</span></p>
             </div>
             
-            <div class="mb-6">
-                <label for="category" class="block text-sm font-medium text-gray-700 mb-2">
-                    <i class="fas fa-tags mr-2"></i>Category / Muscle Group *
-                </label>
-                <select id="category" name="category" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    <option value="">-- Select Category --</option>
-                    <optgroup label="Muscle Groups">
-                        <option value="chest" {% if workout.category == 'chest' %}selected{% endif %}>Chest</option>
-                        <option value="shoulder" {% if workout.category == 'shoulder' %}selected{% endif %}>Shoulder</option>
-                        <option value="back" {% if workout.category == 'back' %}selected{% endif %}>Back</option>
-                        <option value="legs" {% if workout.category == 'legs' %}selected{% endif %}>Legs</option>
-                        <option value="arms" {% if workout.category == 'arms' %}selected{% endif %}>Arms</option>
-                        <option value="abs" {% if workout.category == 'abs' %}selected{% endif %}>Abs</option>
-                        <option value="full_body" {% if workout.category == 'full_body' %}selected{% endif %}>Full Body</option>
-                    </optgroup>
-                    <optgroup label="Exercise Types">
-                        <option value="cardio" {% if workout.category == 'cardio' %}selected{% endif %}>Cardio</option>
-                        <option value="strength" {% if workout.category == 'strength' %}selected{% endif %}>Strength Training</option>
-                        <option value="flexibility" {% if workout.category == 'flexibility' %}selected{% endif %}>Flexibility</option>
-                        <option value="hiit" {% if workout.category == 'hiit' %}selected{% endif %}>HIIT</option>
-                        <option value="yoga" {% if workout.category == 'yoga' %}selected{% endif %}>Yoga</option>
-                        <option value="pilates" {% if workout.category == 'pilates' %}selected{% endif %}>Pilates</option>
-                        <option value="other" {% if workout.category == 'other' %}selected{% endif %}>Other</option>
-                    </optgroup>
-                </select>
-                <p class="text-xs text-gray-500 mt-1">Select the muscle group or exercise type for this workout</p>
-            </div>
-            
-            <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <label class="block text-sm font-medium text-gray-700 mb-3">
-                    <i class="fas fa-dollar-sign mr-2"></i>Workout Access Type *
-                </label>
-                <div class="space-y-3">
-                    <div class="flex items-start">
-                        <input type="radio" id="is_free_true" name="is_free" value="true"
-                               {% if workout and workout.is_free %}checked{% elif not workout %}checked{% endif %}
-                               class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 mt-1">
-                        <label for="is_free_true" class="ml-3 flex-1">
-                            <div class="flex items-center">
-                                <i class="fas fa-unlock text-green-600 mr-2"></i>
-                                <span class="font-semibold text-gray-900">Free Workout</span>
-                            </div>
-                            <p class="text-sm text-gray-600 mt-1">Available to all users without any subscription. Anyone can access this workout.</p>
-                        </label>
+            <div class="bg-white rounded-2xl shadow-xl p-8">
+                <form method="POST" enctype="multipart/form-data" id="workoutForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="category" value="{{ selected_category }}">
+                    
+                    <div id="workoutContainer" class="space-y-6">
+                        <!-- Workout entries will be added here -->
                     </div>
-                    <div class="flex items-start">
-                        <input type="radio" id="is_free_false" name="is_free" value="false"
-                               {% if workout and not workout.is_free %}checked{% endif %}
-                               class="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 mt-1">
-                        <label for="is_free_false" class="ml-3 flex-1">
-                            <div class="flex items-center">
-                                <i class="fas fa-crown text-yellow-600 mr-2"></i>
-                                <span class="font-semibold text-gray-900">Premium Workout</span>
-                            </div>
-                            <p class="text-sm text-gray-600 mt-1">Only accessible to users with an active subscription to a membership plan that includes this workout.</p>
-                        </label>
+                    
+                    <div class="mt-6 flex gap-4">
+                        <button type="button" id="addWorkoutBtn" 
+                                class="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-200 font-semibold flex items-center">
+                            <i class="fas fa-plus mr-2"></i>Add Another Workout
+                        </button>
                     </div>
-                </div>
+                    
+                    <div class="mt-8 pt-6 border-t border-gray-200 flex gap-4">
+                        <button type="submit" class="flex-1 bg-gradient-to-r from-green-600 to-blue-600 text-white py-4 rounded-xl hover:from-green-700 hover:to-blue-700 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                            <i class="fas fa-save mr-2"></i>Create Workouts
+                        </button>
+                        <a href="{% url 'staff:workout_list' %}" class="flex-1 bg-gray-200 text-gray-800 py-4 rounded-xl hover:bg-gray-300 transition-all duration-200 text-center font-semibold text-lg">
+                            <i class="fas fa-times mr-2"></i>Cancel
+                        </a>
+                    </div>
+                </form>
             </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div>
-                    <label for="difficulty_level" class="block text-sm font-medium text-gray-700 mb-2">
-                        Difficulty Level *
-                    </label>
-                    <select id="difficulty_level" name="difficulty_level" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        {% for value, label in difficulties %}
-                        <option value="{{ value }}" {% if workout.difficulty_level == value %}selected{% endif %}>
-                            {{ label }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div>
-                    <label for="duration" class="block text-sm font-medium text-gray-700 mb-2">
-                        Duration (minutes) *
-                    </label>
-                    <input type="number" id="duration" name="duration" required min="1"
-                           value="{% if workout %}{{ workout.duration }}{% endif %}"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                </div>
-            </div>
-            
-            <div class="mb-6">
-                <label for="video_url" class="block text-sm font-medium text-gray-700 mb-2">
-                    Video URL
-                </label>
-                <input type="url" id="video_url" name="video_url"
-                       value="{% if workout %}{{ workout.video_url }}{% endif %}"
-                       placeholder="https://example.com/video"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                <p class="text-xs text-gray-500 mt-1">Optional: Link to workout video or demonstration</p>
-            </div>
-            
-            <div class="mb-6">
-                <label for="thumbnail" class="block text-sm font-medium text-gray-700 mb-2">
-                    <i class="fas fa-image mr-2"></i>Thumbnail Image
-                </label>
-                <input type="file" id="thumbnail" name="thumbnail" accept="image/*"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                <p class="text-xs text-gray-500 mt-1">Optional: Upload a thumbnail image for this workout</p>
-                {% if workout and workout.thumbnail %}
-                <div class="mt-2">
-                    <p class="text-xs text-blue-600">Current thumbnail:</p>
-                    <img src="{{ workout.thumbnail.url }}" alt="Current thumbnail" class="mt-1 h-20 w-20 object-cover rounded">
-                    <a href="{{ workout.thumbnail.url }}" target="_blank" class="text-xs text-blue-600 hover:underline ml-2">View full size</a>
-                </div>
-                {% endif %}
-            </div>
-            
-            <div class="flex gap-4">
-                <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition">
-                    {{ action }} Workout
-                </button>
-                <a href="{% url 'staff:workout_list' %}" class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg hover:bg-gray-300 transition text-center">
-                    Cancel
-                </a>
-            </div>
-        </form>
+        </div>
+        {% endif %}
     </div>
 </div>
-{% endblock %}
 
+{% if step == 'create' %}
+<script>
+let workoutCount = 0;
+
+// Add first workout entry
+addWorkoutEntry();
+
+function addWorkoutEntry() {
+    workoutCount++;
+    const container = document.getElementById('workoutContainer');
+    const entry = document.createElement('div');
+    entry.className = 'workout-entry p-6 border-2 border-gray-200 rounded-xl bg-gradient-to-br from-gray-50 to-white';
+    entry.innerHTML = `
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                <i class="fas fa-dumbbell text-green-600 mr-2"></i>Workout ${workoutCount}
+            </h3>
+            <button type="button" class="remove-workout text-red-600 hover:text-red-800 transition-colors" ${workoutCount === 1 ? 'style="display:none;"' : ''}>
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    <i class="fas fa-heading mr-2 text-green-500"></i>Workout Title *
+                </label>
+                <input type="text" name="workout_title[]" required
+                       class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    <i class="fas fa-layer-group mr-2 text-green-500"></i>Sets *
+                </label>
+                <input type="number" name="workout_sets[]" required min="1" value="1"
+                       class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+            </div>
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                <i class="fas fa-align-left mr-2 text-green-500"></i>Description *
+            </label>
+            <textarea name="workout_description[]" rows="3" required
+                      class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    <i class="fas fa-signal mr-2 text-green-500"></i>Difficulty Level *
+                </label>
+                <select name="workout_difficulty[]" required
+                        class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    {% for value, label in difficulties %}
+                    <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    <i class="fas fa-dollar-sign mr-2 text-green-500"></i>Access Type *
+                </label>
+                <div class="flex gap-4">
+                    <label class="flex items-center p-3 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-green-500 transition-all">
+                        <input type="radio" name="workout_is_free_${workoutCount}" value="true" checked class="sr-only workout-is-free">
+                        <div class="flex items-center">
+                            <i class="fas fa-unlock text-green-600 mr-2"></i>
+                            <span>Free</span>
+                        </div>
+                    </label>
+                    <label class="flex items-center p-3 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-yellow-500 transition-all">
+                        <input type="radio" name="workout_is_free_${workoutCount}" value="false" class="sr-only workout-is-free">
+                        <div class="flex items-center">
+                            <i class="fas fa-lock text-yellow-600 mr-2"></i>
+                            <span>Paid</span>
+                        </div>
+                    </label>
+                </div>
+                <input type="hidden" name="workout_is_free[]" value="true" class="workout-is-free-hidden">
+            </div>
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                <i class="fas fa-video mr-2 text-green-500"></i>Video URL
+            </label>
+            <input type="url" name="workout_video_url[]"
+                   placeholder="https://example.com/video"
+                   class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+        </div>
+        
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                <i class="fas fa-image mr-2 text-green-500"></i>Thumbnail Image
+            </label>
+            <input type="file" name="workout_thumbnail[]" accept="image/*"
+                   class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+        </div>
+    `;
+    
+    container.appendChild(entry);
+    
+    // Add remove functionality
+    const removeBtn = entry.querySelector('.remove-workout');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+            entry.remove();
+            workoutCount--;
+            updateWorkoutNumbers();
+        });
+    }
+    
+    // Handle radio buttons for is_free
+    entry.querySelectorAll('.workout-is-free').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const hiddenInput = entry.querySelector('.workout-is-free-hidden');
+            hiddenInput.value = this.value;
+        });
+    });
+}
+
+function updateWorkoutNumbers() {
+    const entries = document.querySelectorAll('.workout-entry');
+    entries.forEach((entry, index) => {
+        const title = entry.querySelector('h3');
+        title.innerHTML = `<i class="fas fa-dumbbell text-green-600 mr-2"></i>Workout ${index + 1}`;
+        
+        const removeBtn = entry.querySelector('.remove-workout');
+        if (entries.length > 1) {
+            removeBtn.style.display = 'block';
+        } else {
+            removeBtn.style.display = 'none';
+        }
+    });
+}
+
+// Add workout button
+document.getElementById('addWorkoutBtn').addEventListener('click', function() {
+    addWorkoutEntry();
+});
+</script>
+{% endif %}
+{% endblock %}

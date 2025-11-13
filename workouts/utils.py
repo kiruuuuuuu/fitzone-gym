@@ -10,6 +10,7 @@ def user_has_access_to_workout(user, workout):
     
     Rules:
     - Free workouts are always accessible
+    - Trainers have full access to all workouts (free and paid)
     - Paid workouts require an active subscription with a plan that includes the workout
     
     Args:
@@ -26,6 +27,10 @@ def user_has_access_to_workout(user, workout):
     # Paid workouts require active subscription
     if not user.is_authenticated:
         return False
+    
+    # Trainers have full access to all workouts
+    if hasattr(user, 'trainer_profile'):
+        return True
     
     # Check if user has an active subscription
     from core.models import Subscription
@@ -61,6 +66,10 @@ def get_accessible_workouts(user):
     
     # If user is authenticated and has active subscription, include plan workouts
     if user.is_authenticated:
+        # Trainers have access to all workouts
+        if hasattr(user, 'trainer_profile'):
+            return Workout.objects.all()
+        
         active_subscription = Subscription.objects.filter(
             user=user,
             status='active',
@@ -73,4 +82,28 @@ def get_accessible_workouts(user):
             accessible = accessible.union(plan_workouts)
     
     return accessible.distinct()
+
+
+def can_view_workout_details(user, workout):
+    """
+    Check if a user can view full workout details (description, sets, difficulty, etc.).
+    
+    Rules:
+    - Free workouts: all details visible to everyone
+    - Paid workouts: details only visible if user has access
+    - If user doesn't have access, only the name should be visible
+    
+    Args:
+        user: CustomUser instance (can be AnonymousUser)
+        workout: Workout instance
+    
+    Returns:
+        bool: True if user can view details, False otherwise
+    """
+    # Free workouts: details always visible
+    if workout.is_free:
+        return True
+    
+    # For paid workouts, check if user has access
+    return user_has_access_to_workout(user, workout)
 

@@ -27,9 +27,9 @@ class CustomUserAdmin(UserAdmin):
 @admin.register(MembershipPlan)
 class MembershipPlanAdmin(admin.ModelAdmin):
     """Admin interface for MembershipPlan"""
-    list_display = ['name', 'price', 'duration', 'is_active', 'stripe_price_id', 'created_at']
+    list_display = ['name', 'price', 'duration', 'is_active', 'created_at']
     list_filter = ['is_active', 'duration', 'created_at']
-    search_fields = ['name', 'stripe_price_id']
+    search_fields = ['name']
     ordering = ['price']
     filter_horizontal = ['included_workouts']
     fieldsets = (
@@ -39,9 +39,6 @@ class MembershipPlanAdmin(admin.ModelAdmin):
         ('Included Workouts', {
             'fields': ('included_workouts',),
             'description': 'Select workouts that will be included with this membership plan'
-        }),
-        ('Stripe Integration', {
-            'fields': ('stripe_price_id',)
         }),
     )
 
@@ -61,15 +58,15 @@ class SubscriptionAdmin(admin.ModelAdmin):
     """Admin interface for Subscription"""
     list_display = ['user', 'plan', 'status', 'current_period_start', 'current_period_end', 'created_at']
     list_filter = ['status', 'created_at', 'current_period_start']
-    search_fields = ['user__username', 'user__email', 'plan__name', 'stripe_subscription_id']
+    search_fields = ['user__username', 'user__email', 'plan__name']
     ordering = ['-created_at']
     readonly_fields = ['created_at', 'updated_at']
     fieldsets = (
         ('Subscription Information', {
             'fields': ('user', 'plan', 'status')
         }),
-        ('Stripe Information', {
-            'fields': ('stripe_subscription_id', 'current_period_start', 'current_period_end')
+        ('Subscription Period', {
+            'fields': ('current_period_start', 'current_period_end')
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at')

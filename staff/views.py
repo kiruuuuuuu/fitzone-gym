@@ -10,9 +10,9 @@ from django.views.generic import ListView, DetailView
 from datetime import datetime, timedelta
 from .mixins import StaffRequiredMixin, TrainerRequiredMixin, SuperuserRequiredMixin
 
-from core.models import CustomUser, MembershipPlan, Subscription, Trainer, UserPoints, QRCodeSession, PlanFeature
-from bookings.models import GymClass, Booking
-from workouts.models import Workout, WorkoutPlan, UserWorkoutPlan
+from core.models import CustomUser, MembershipPlan, Subscription, Trainer, UserPoints, QRCodeSession, PlanFeature, PersonalTrainerSubscription
+from bookings.models import GymClass, Booking, ClassSchedule
+from workouts.models import Workout, WorkoutPlan, UserWorkoutPlan, TrainerAssignedWorkout
 from community.models import Challenge
 
 
@@ -368,27 +368,64 @@ def class_create(request):
         trainer_id = request.POST.get('trainer')
         duration = request.POST.get('duration')
         max_capacity = request.POST.get('max_capacity')
-        schedule_time = request.POST.get('schedule_time')
-        schedule_days = request.POST.get('schedule_days')
+        is_paid = request.POST.get('is_paid') == 'true'
+        price = request.POST.get('price')
+        location_type = request.POST.get('location_type', 'offline')
+        location_details = request.POST.get('location_details', '')
         is_active = request.POST.get('is_active') == 'on'
         
-        if name and duration and max_capacity:
-            try:
+        # Get schedule dates and times
+        schedule_dates = request.POST.getlist('schedule_date[]')
+        schedule_times = request.POST.getlist('schedule_time[]')
+        
+        # Validation
+        if not name or not duration or not max_capacity:
+            messages.error(request, 'Name, duration, and max capacity are required.')
+            return render(request, 'staff/class_form.html', {'trainers': trainers, 'action': 'Create'})
+        
+        if is_paid and (not price or float(price) <= 0):
+            messages.error(request, 'Price is required for paid classes.')
+            return render(request, 'staff/class_form.html', {'trainers': trainers, 'action': 'Create'})
+        
+        if len(schedule_dates) == 0 or len(schedule_dates) > 3:
+            messages.error(request, 'Please add 1-3 schedule entries.')
+            return render(request, 'staff/class_form.html', {'trainers': trainers, 'action': 'Create'})
+        
+        try:
+            from django.db import transaction
+            from datetime import datetime
+            
+            with transaction.atomic():
                 trainer = Trainer.objects.get(id=trainer_id) if trainer_id else None
-                GymClass.objects.create(
+                gym_class = GymClass.objects.create(
                     name=name,
                     description=description,
                     trainer=trainer,
-                    duration=duration,
-                    max_capacity=max_capacity,
-                    schedule_time=schedule_time,
-                    schedule_days=schedule_days,
+                    duration=int(duration),
+                    max_capacity=int(max_capacity),
+                    is_paid=is_paid,
+                    price=float(price) if is_paid and price else None,
+                    location_type=location_type,
+                    location_details=location_details,
                     is_active=is_active
                 )
-                messages.success(request, f'Class "{name}" created successfully!')
+                
+                # Create ClassSchedule entries
+                for date_str, time_str in zip(schedule_dates, schedule_times):
+                    if date_str and time_str:
+                        ClassSchedule.objects.create(
+                            gym_class=gym_class,
+                            class_date=datetime.strptime(date_str, '%Y-%m-%d').date(),
+                            class_time=datetime.strptime(time_str, '%H:%M').time(),
+                            is_active=True
+                        )
+                
+                messages.success(request, f'Class "{name}" created successfully with {len(schedule_dates)} schedule(s)!')
                 return redirect('staff:class_list')
-            except Exception as e:
-                messages.error(request, f'Error creating class: {str(e)}')
+        except ValueError as e:
+            messages.error(request, f'Invalid date or time format: {str(e)}')
+        except Exception as e:
+            messages.error(request, f'Error creating class: {str(e)}')
     
     return render(request, 'staff/class_form.html', {'trainers': trainers, 'action': 'Create'})
 
@@ -406,17 +443,56 @@ def class_edit(request, class_id):
         gym_class.name = request.POST.get('name')
         gym_class.description = request.POST.get('description')
         trainer_id = request.POST.get('trainer')
-        gym_class.duration = request.POST.get('duration')
-        gym_class.max_capacity = request.POST.get('max_capacity')
-        gym_class.schedule_time = request.POST.get('schedule_time')
-        gym_class.schedule_days = request.POST.get('schedule_days')
+        gym_class.duration = int(request.POST.get('duration'))
+        gym_class.max_capacity = int(request.POST.get('max_capacity'))
+        is_paid = request.POST.get('is_paid') == 'true'
+        price = request.POST.get('price')
+        location_type = request.POST.get('location_type', 'offline')
+        location_details = request.POST.get('location_details', '')
         gym_class.is_active = request.POST.get('is_active') == 'on'
         
+        # Get schedule dates and times
+        schedule_dates = request.POST.getlist('schedule_date[]')
+        schedule_times = request.POST.getlist('schedule_time[]')
+        
+        # Validation
+        if is_paid and (not price or float(price) <= 0):
+            messages.error(request, 'Price is required for paid classes.')
+            return render(request, 'staff/class_form.html', {'gym_class': gym_class, 'trainers': trainers, 'action': 'Edit'})
+        
+        if len(schedule_dates) == 0 or len(schedule_dates) > 3:
+            messages.error(request, 'Please add 1-3 schedule entries.')
+            return render(request, 'staff/class_form.html', {'gym_class': gym_class, 'trainers': trainers, 'action': 'Edit'})
+        
         try:
-            gym_class.trainer = Trainer.objects.get(id=trainer_id) if trainer_id else None
-            gym_class.save()
-            messages.success(request, f'Class "{gym_class.name}" updated successfully!')
-            return redirect('staff:class_list')
+            from django.db import transaction
+            from datetime import datetime
+            
+            with transaction.atomic():
+                gym_class.trainer = Trainer.objects.get(id=trainer_id) if trainer_id else None
+                gym_class.is_paid = is_paid
+                gym_class.price = float(price) if is_paid and price else None
+                gym_class.location_type = location_type
+                gym_class.location_details = location_details
+                gym_class.save()
+                
+                # Delete existing schedules and create new ones
+                ClassSchedule.objects.filter(gym_class=gym_class).delete()
+                
+                # Create new ClassSchedule entries
+                for date_str, time_str in zip(schedule_dates, schedule_times):
+                    if date_str and time_str:
+                        ClassSchedule.objects.create(
+                            gym_class=gym_class,
+                            class_date=datetime.strptime(date_str, '%Y-%m-%d').date(),
+                            class_time=datetime.strptime(time_str, '%H:%M').time(),
+                            is_active=True
+                        )
+                
+                messages.success(request, f'Class "{gym_class.name}" updated successfully with {len(schedule_dates)} schedule(s)!')
+                return redirect('staff:class_list')
+        except ValueError as e:
+            messages.error(request, f'Invalid date or time format: {str(e)}')
         except Exception as e:
             messages.error(request, f'Error updating class: {str(e)}')
     
@@ -435,38 +511,75 @@ def workout_list(request):
 
 @login_required
 def workout_create(request):
-    """Create a new workout"""
+    """Create workouts - step 1: select category, step 2: create multiple workouts"""
     if not request.user.is_staff:
         raise PermissionDenied("You do not have permission to access this page.")
     
-    if request.method == 'POST':
-        title = request.POST.get('title')
-        description = request.POST.get('description')
-        video_url = request.POST.get('video_url')
-        difficulty = request.POST.get('difficulty_level')
-        duration = request.POST.get('duration')
-        category = request.POST.get('category')
-        is_free = request.POST.get('is_free', 'true') == 'true'  # Default to free if not specified
-        
-        if title and description and difficulty and duration and category:
-            try:
-                Workout.objects.create(
-                    title=title,
-                    description=description,
-                    video_url=video_url,
-                    difficulty_level=difficulty,
-                    duration=duration,
-                    category=category,
-                    is_free=is_free,
-                    thumbnail=request.FILES.get('thumbnail')
-                )
-                messages.success(request, f'Workout "{title}" created successfully!')
-                return redirect('staff:workout_list')
-            except Exception as e:
-                messages.error(request, f'Error creating workout: {str(e)}')
+    # Step 1: Category selection
+    if request.method == 'GET' and not request.GET.get('category'):
+        return render(request, 'staff/workout_form.html', {
+            'step': 'category',
+            'categories': Workout.CATEGORY_CHOICES,
+            'action': 'Create'
+        })
     
+    # Step 2: Bulk workout creation
+    selected_category = request.GET.get('category') or request.POST.get('category')
+    
+    if request.method == 'POST' and selected_category:
+        # Get all workout data from form arrays
+        titles = request.POST.getlist('workout_title[]')
+        descriptions = request.POST.getlist('workout_description[]')
+        is_free_list = request.POST.getlist('workout_is_free[]')
+        difficulty_levels = request.POST.getlist('workout_difficulty[]')
+        sets_list = request.POST.getlist('workout_sets[]')
+        video_urls = request.POST.getlist('workout_video_url[]')
+        
+        # Get thumbnail files
+        thumbnails = request.FILES.getlist('workout_thumbnail[]')
+        
+        created_count = 0
+        errors = []
+        
+        try:
+            from django.db import transaction
+            
+            with transaction.atomic():
+                for idx, title in enumerate(titles):
+                    if not title.strip():
+                        continue  # Skip empty entries
+                    
+                    try:
+                        workout = Workout.objects.create(
+                            title=title.strip(),
+                            description=descriptions[idx].strip() if idx < len(descriptions) else '',
+                            category=selected_category,
+                            is_free=is_free_list[idx] == 'true' if idx < len(is_free_list) else True,
+                            difficulty_level=difficulty_levels[idx] if idx < len(difficulty_levels) else '1',
+                            sets=int(sets_list[idx]) if idx < len(sets_list) and sets_list[idx] else 1,
+                            video_url=video_urls[idx].strip() if idx < len(video_urls) and video_urls[idx] else '',
+                            thumbnail=thumbnails[idx] if idx < len(thumbnails) and thumbnails[idx] else None
+                        )
+                        created_count += 1
+                    except Exception as e:
+                        errors.append(f"Error creating workout '{title}': {str(e)}")
+                
+                if created_count > 0:
+                    messages.success(request, f'Successfully created {created_count} workout(s) in category "{dict(Workout.CATEGORY_CHOICES).get(selected_category, selected_category)}"!')
+                    if errors:
+                        for error in errors:
+                            messages.warning(request, error)
+                    return redirect('staff:workout_list')
+                else:
+                    messages.error(request, 'No workouts were created. Please fill in at least one workout form.')
+        except Exception as e:
+            messages.error(request, f'Error creating workouts: {str(e)}')
+    
+    # Render step 2 form
     return render(request, 'staff/workout_form.html', {
-        'categories': Workout.CATEGORY_CHOICES,
+        'step': 'create',
+        'selected_category': selected_category,
+        'category_name': dict(Workout.CATEGORY_CHOICES).get(selected_category, selected_category),
         'difficulties': Workout.DIFFICULTY_CHOICES,
         'action': 'Create'
     })
@@ -485,7 +598,7 @@ def workout_edit(request, workout_id):
         workout.description = request.POST.get('description')
         workout.video_url = request.POST.get('video_url')
         workout.difficulty_level = request.POST.get('difficulty_level')
-        workout.duration = request.POST.get('duration')
+        workout.sets = int(request.POST.get('sets', 1))
         workout.category = request.POST.get('category')
         workout.is_free = request.POST.get('is_free', 'true') == 'true'  # Default to free if not specified
         
@@ -500,7 +613,7 @@ def workout_edit(request, workout_id):
         except Exception as e:
             messages.error(request, f'Error updating workout: {str(e)}')
     
-    return render(request, 'staff/workout_form.html', {
+    return render(request, 'staff/workout_form_edit.html', {
         'workout': workout,
         'categories': Workout.CATEGORY_CHOICES,
         'difficulties': Workout.DIFFICULTY_CHOICES,
@@ -632,7 +745,7 @@ class TrainerListView(StaffRequiredMixin, ListView):
 
 @login_required
 def trainer_create(request):
-    """Create a new trainer"""
+    """Create a new trainer - can create new user or use existing user"""
     if not request.user.is_staff:
         raise PermissionDenied("You do not have permission to access this page.")
     
@@ -641,24 +754,84 @@ def trainer_create(request):
     available_users = CustomUser.objects.exclude(id__in=existing_trainer_user_ids)
     
     if request.method == 'POST':
-        user_id = request.POST.get('user')
+        user_type = request.POST.get('user_type', 'existing')  # 'existing' or 'new'
         bio = request.POST.get('bio')
         specializations = request.POST.get('specializations')
         
-        if user_id:
-            try:
-                user = CustomUser.objects.get(id=user_id)
+        try:
+            from django.db import transaction
+            
+            with transaction.atomic():
+                if user_type == 'new':
+                    # Create new user
+                    username = request.POST.get('username')
+                    password = request.POST.get('password')
+                    email = request.POST.get('email', '')
+                    first_name = request.POST.get('first_name', '')
+                    last_name = request.POST.get('last_name', '')
+                    
+                    # Validation
+                    if not username or not password:
+                        messages.error(request, 'Username and password are required when creating a new user.')
+                        return render(request, 'staff/trainer_form.html', {
+                            'available_users': available_users,
+                            'action': 'Create'
+                        })
+                    
+                    if CustomUser.objects.filter(username=username).exists():
+                        messages.error(request, 'Username already exists.')
+                        return render(request, 'staff/trainer_form.html', {
+                            'available_users': available_users,
+                            'action': 'Create'
+                        })
+                    
+                    if email and CustomUser.objects.filter(email=email).exists():
+                        messages.error(request, 'Email already exists.')
+                        return render(request, 'staff/trainer_form.html', {
+                            'available_users': available_users,
+                            'action': 'Create'
+                        })
+                    
+                    # Create the user
+                    user = CustomUser.objects.create_user(
+                        username=username,
+                        email=email if email else None,
+                        password=password,
+                        first_name=first_name,
+                        last_name=last_name
+                    )
+                else:
+                    # Use existing user
+                    user_id = request.POST.get('user')
+                    if not user_id:
+                        messages.error(request, 'Please select a user or create a new one.')
+                        return render(request, 'staff/trainer_form.html', {
+                            'available_users': available_users,
+                            'action': 'Create'
+                        })
+                    
+                    user = CustomUser.objects.get(id=user_id)
+                    # Check if user already has a trainer profile
+                    if hasattr(user, 'trainer_profile'):
+                        messages.error(request, 'This user already has a trainer profile.')
+                        return render(request, 'staff/trainer_form.html', {
+                            'available_users': available_users,
+                            'action': 'Create'
+                        })
+                
+                # Create trainer profile
                 Trainer.objects.create(
                     user=user,
                     bio=bio,
                     specializations=specializations
                 )
-                messages.success(request, f'Trainer created successfully for {user.get_full_name()}!')
+                messages.success(request, f'Trainer created successfully for {user.get_full_name() or user.username}!')
                 return redirect('staff:trainer_list')
-            except CustomUser.DoesNotExist:
-                messages.error(request, 'Invalid user selected.')
-            except Exception as e:
-                messages.error(request, f'Error creating trainer: {str(e)}')
+                
+        except CustomUser.DoesNotExist:
+            messages.error(request, 'Invalid user selected.')
+        except Exception as e:
+            messages.error(request, f'Error creating trainer: {str(e)}')
     
     return render(request, 'staff/trainer_form.html', {
         'available_users': available_users,
@@ -1079,4 +1252,81 @@ def trainer_plan_assign(request, plan_id):
     return render(request, 'trainer/plan_assign.html', {
         'plan': plan,
         'members': members
+    })
+
+
+@login_required
+def trainer_assign_workout(request):
+    """Assign individual workouts to clients who have selected this trainer"""
+    if not hasattr(request.user, 'trainer_profile'):
+        raise PermissionDenied("You must be a trainer to access this page.")
+    
+    trainer = request.user.trainer_profile
+    
+    # Get clients who have selected this trainer (active subscriptions)
+    client_subscriptions = PersonalTrainerSubscription.objects.filter(
+        trainer=trainer,
+        status='active'
+    ).select_related('user')
+    
+    clients = [sub.user for sub in client_subscriptions]
+    
+    if request.method == 'POST':
+        user_id = request.POST.get('user')
+        workout_id = request.POST.get('workout')
+        notes = request.POST.get('notes', '')
+        
+        if user_id and workout_id:
+            try:
+                user = CustomUser.objects.get(id=user_id, is_staff=False)
+                workout = Workout.objects.get(id=workout_id)
+                
+                # Verify this user is a client of this trainer
+                if user not in clients:
+                    messages.error(request, 'You can only assign workouts to your clients.')
+                    return redirect('trainer:assign_workout')
+                
+                # Check if already assigned
+                existing = TrainerAssignedWorkout.objects.filter(
+                    trainer=trainer,
+                    user=user,
+                    workout=workout
+                ).first()
+                
+                if existing:
+                    # Update notes if assignment exists
+                    existing.notes = notes
+                    existing.save()
+                    messages.success(request, f'Workout assignment updated for {user.get_full_name()}!')
+                else:
+                    # Create new assignment
+                    TrainerAssignedWorkout.objects.create(
+                        trainer=trainer,
+                        user=user,
+                        workout=workout,
+                        notes=notes
+                    )
+                    messages.success(request, f'Workout "{workout.title}" assigned to {user.get_full_name()}!')
+                
+                return redirect('trainer:assign_workout')
+            except CustomUser.DoesNotExist:
+                messages.error(request, 'Invalid user selected.')
+            except Workout.DoesNotExist:
+                messages.error(request, 'Invalid workout selected.')
+            except Exception as e:
+                messages.error(request, f'Error assigning workout: {str(e)}')
+    
+    # Get all workouts (trainers have access to all)
+    workouts = Workout.objects.all().order_by('category', 'title')
+    
+    # Get existing assignments for display
+    existing_assignments = TrainerAssignedWorkout.objects.filter(
+        trainer=trainer
+    ).select_related('user', 'workout').order_by('-assigned_at')[:20]
+    
+    return render(request, 'trainer/assign_workout.html', {
+        'trainer': trainer,
+        'clients': clients,
+        'workouts': workouts,
+        'existing_assignments': existing_assignments,
     })

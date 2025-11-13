@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Assign Workout to Client - Trainer Portal{% endblock %}
+
+{% block content %}
+<div class="bg-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold mb-2">Assign Workout to Client</h1>
+            <p class="text-gray-600">Assign individual workouts to your clients</p>
+        </div>
+
+        {% if not clients %}
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+            <i class="fas fa-exclamation-triangle text-4xl text-yellow-600 mb-4"></i>
+            <h3 class="text-xl font-semibold mb-2">No Active Clients</h3>
+            <p class="text-gray-600">You don't have any active clients yet. Clients need to subscribe to you as their personal trainer first.</p>
+        </div>
+        {% else %}
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Assignment Form -->
+            <div class="lg:col-span-2">
+                <div class="bg-white border border-gray-200 rounded-lg shadow-md p-6">
+                    <h2 class="text-2xl font-bold mb-6">Assign New Workout</h2>
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="user" class="block text-sm font-medium text-gray-700 mb-2">
+                                Select Client *
+                            </label>
+                            <select id="user" name="user" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">-- Select a client --</option>
+                                {% for client in clients %}
+                                <option value="{{ client.id }}">{{ client.get_full_name|default:client.username }} ({{ client.email }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="workout" class="block text-sm font-medium text-gray-700 mb-2">
+                                Select Workout *
+                            </label>
+                            <select id="workout" name="workout" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">-- Select a workout --</option>
+                                {% for workout in workouts %}
+                                <option value="{{ workout.id }}">
+                                    {{ workout.title }} ({{ workout.get_category_display }}) - {{ workout.get_difficulty_display_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">
+                                Notes (Optional)
+                            </label>
+                            <textarea id="notes" name="notes" rows="4"
+                                      placeholder="Add any specific instructions or notes for this workout..."
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-semibold">
+                            <i class="fas fa-check mr-2"></i>Assign Workout
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Recent Assignments -->
+            <div>
+                <div class="bg-white border border-gray-200 rounded-lg shadow-md p-6">
+                    <h2 class="text-2xl font-bold mb-4">Recent Assignments</h2>
+                    {% if existing_assignments %}
+                    <div class="space-y-4 max-h-96 overflow-y-auto">
+                        {% for assignment in existing_assignments %}
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <h3 class="font-semibold text-blue-600 mb-1">
+                                <a href="{% url 'workouts:workout_detail' assignment.workout.id %}" class="hover:underline">
+                                    {{ assignment.workout.title }}
+                                </a>
+                            </h3>
+                            <p class="text-sm text-gray-600 mb-1">
+                                <i class="fas fa-user mr-1"></i>{{ assignment.user.get_full_name|default:assignment.user.username }}
+                            </p>
+                            {% if assignment.notes %}
+                            <p class="text-xs text-gray-500 mt-2 italic">{{ assignment.notes|truncatewords:10 }}</p>
+                            {% endif %}
+                            <p class="text-xs text-gray-400 mt-2">{{ assignment.assigned_at|date:"M d, Y" }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-gray-600 text-center py-8">No assignments yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

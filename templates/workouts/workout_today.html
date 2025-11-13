@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+
+{% block title %}What Workout Will You Do Today? - FitZone Gym{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-orange-50 via-white to-pink-50 py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h1 class="text-5xl font-bold bg-gradient-to-r from-orange-600 to-pink-600 bg-clip-text text-transparent mb-4 flex items-center justify-center">
+                <i class="fas fa-fire mr-4 text-orange-600"></i>What Workout Will You Do Today?
+            </h1>
+            <p class="text-gray-600 text-lg">Select a category and start your fitness journey</p>
+        </div>
+        
+        {% if not selected_category %}
+        <!-- Category Selection -->
+        <div class="max-w-6xl mx-auto">
+            <div class="bg-white rounded-2xl shadow-xl p-8">
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {% for value, label in categories %}
+                    <a href="?category={{ value }}" 
+                       class="group relative bg-gradient-to-br from-orange-50 to-pink-50 p-8 rounded-2xl border-2 border-gray-200 hover:border-orange-500 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-xl text-center">
+                        <div class="text-5xl mb-4 text-orange-600 group-hover:scale-110 transition-transform duration-300">
+                            {% if value == 'chest' %}<i class="fas fa-heart"></i>
+                            {% elif value == 'shoulder' %}<i class="fas fa-mountain"></i>
+                            {% elif value == 'back' %}<i class="fas fa-arrow-up"></i>
+                            {% elif value == 'legs' %}<i class="fas fa-walking"></i>
+                            {% elif value == 'arms' %}<i class="fas fa-hand-paper"></i>
+                            {% elif value == 'abs' %}<i class="fas fa-square"></i>
+                            {% elif value == 'full_body' %}<i class="fas fa-user"></i>
+                            {% elif value == 'cardio' %}<i class="fas fa-running"></i>
+                            {% elif value == 'strength' %}<i class="fas fa-dumbbell"></i>
+                            {% elif value == 'flexibility' %}<i class="fas fa-yin-yang"></i>
+                            {% elif value == 'hiit' %}<i class="fas fa-fire"></i>
+                            {% elif value == 'yoga' %}<i class="fas fa-om"></i>
+                            {% elif value == 'pilates' %}<i class="fas fa-spa"></i>
+                            {% else %}<i class="fas fa-dumbbell"></i>
+                            {% endif %}
+                        </div>
+                        <h3 class="font-bold text-xl text-gray-800 group-hover:text-orange-600 transition-colors">{{ label }}</h3>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- Two-Column Layout: Workouts and Completed -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column: Free and Paid Workouts (2/3 width) -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Free Workouts Section -->
+                {% if free_workouts %}
+                <div class="bg-white rounded-2xl shadow-xl p-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-unlock text-green-600 mr-3 text-3xl"></i>Free Workouts
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% for item in free_workouts %}
+                        <div class="border-2 border-green-200 rounded-xl p-4 hover:shadow-lg transition-all duration-300 {% if item.completed_today %}bg-green-50{% else %}bg-white{% endif %}">
+                            {% if item.workout.thumbnail %}
+                                <img src="{{ item.workout.thumbnail.url }}" alt="{{ item.workout.title }}" class="w-full h-32 object-cover rounded-lg mb-3">
+                            {% else %}
+                                <div class="w-full h-32 bg-gradient-to-br from-green-400 to-green-600 rounded-lg mb-3 flex items-center justify-center">
+                                    <i class="fas fa-dumbbell text-white text-4xl opacity-50"></i>
+                                </div>
+                            {% endif %}
+                            
+                            <h3 class="text-lg font-bold text-gray-800 mb-2">{{ item.workout.title }}</h3>
+                            <p class="text-sm text-gray-600 mb-3 line-clamp-2">{{ item.workout.description|truncatewords:15 }}</p>
+                            
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                                    Level {{ item.workout.difficulty_level }}
+                                </span>
+                                <span class="text-sm text-gray-600">
+                                    <i class="fas fa-layer-group mr-1"></i>{{ item.workout.sets }} sets
+                                </span>
+                            </div>
+                            
+                            {% if item.completed_today %}
+                            <div class="bg-green-100 border border-green-300 rounded-lg p-2 text-center">
+                                <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                                <span class="text-green-800 font-semibold text-sm">Completed Today</span>
+                            </div>
+                            {% else %}
+                            <form method="post" action="{% url 'workouts:mark_completed' item.workout.id %}?redirect_to=workout_today">
+                                {% csrf_token %}
+                                <button type="submit" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-all duration-200 font-semibold text-sm transform hover:scale-105">
+                                    <i class="fas fa-check mr-2"></i>Mark as Completed
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Paid Workouts Section -->
+                {% if paid_workouts %}
+                <div class="bg-white rounded-2xl shadow-xl p-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-crown text-yellow-600 mr-3 text-3xl"></i>Paid Workouts
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% for item in paid_workouts %}
+                        <div class="border-2 {% if item.has_access %}border-yellow-200{% else %}border-gray-300 opacity-75{% endif %} rounded-xl p-4 hover:shadow-lg transition-all duration-300 {% if item.completed_today %}bg-yellow-50{% else %}bg-white{% endif %} {% if not item.has_access %}relative{% endif %}">
+                            {% if not item.has_access %}
+                            <div class="absolute inset-0 bg-gray-900 bg-opacity-50 rounded-xl flex items-center justify-center z-10">
+                                <div class="text-center text-white p-4">
+                                    <i class="fas fa-lock text-4xl mb-2"></i>
+                                    <p class="font-bold mb-2">Locked</p>
+                                    <a href="{% url 'pricing' %}" class="inline-block bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-all duration-200 font-semibold text-sm">
+                                        <i class="fas fa-unlock mr-2"></i>Unlock Now
+                                    </a>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if item.can_view_details %}
+                                {% if item.workout.thumbnail %}
+                                    <img src="{{ item.workout.thumbnail.url }}" alt="{{ item.workout.title }}" class="w-full h-32 object-cover rounded-lg mb-3">
+                                {% else %}
+                                    <div class="w-full h-32 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg mb-3 flex items-center justify-center">
+                                        <i class="fas fa-dumbbell text-white text-4xl opacity-50"></i>
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                <div class="w-full h-32 bg-gray-300 rounded-lg mb-3 flex items-center justify-center">
+                                    <i class="fas fa-lock text-gray-500 text-4xl"></i>
+                                </div>
+                            {% endif %}
+                            
+                            <h3 class="text-lg font-bold text-gray-800 mb-2">{{ item.workout.title }}</h3>
+                            {% if item.can_view_details %}
+                                <p class="text-sm text-gray-600 mb-3 line-clamp-2">{{ item.workout.description|truncatewords:15 }}</p>
+                                
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">
+                                        Level {{ item.workout.difficulty_level }}
+                                    </span>
+                                    <span class="text-sm text-gray-600">
+                                        <i class="fas fa-layer-group mr-1"></i>{{ item.workout.sets }} sets
+                                    </span>
+                                </div>
+                            {% else %}
+                                <p class="text-sm text-gray-500 italic mb-3">Upgrade to view workout details</p>
+                            {% endif %}
+                            
+                            {% if item.has_access %}
+                                {% if item.completed_today %}
+                                <div class="bg-green-100 border border-green-300 rounded-lg p-2 text-center">
+                                    <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                                    <span class="text-green-800 font-semibold text-sm">Completed Today</span>
+                                </div>
+                                {% else %}
+                                <form method="post" action="{% url 'workouts:mark_completed' item.workout.id %}?redirect_to=workout_today">
+                                    {% csrf_token %}
+                                    <button type="submit" class="w-full bg-yellow-600 text-white py-2 px-4 rounded-lg hover:bg-yellow-700 transition-all duration-200 font-semibold text-sm transform hover:scale-105">
+                                        <i class="fas fa-check mr-2"></i>Mark as Completed
+                                    </button>
+                                </form>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if not free_workouts and not paid_workouts %}
+                <div class="bg-white rounded-2xl shadow-xl p-12 text-center">
+                    <i class="fas fa-dumbbell text-6xl text-gray-400 mb-4"></i>
+                    <p class="text-xl text-gray-600">No workouts available in this category yet.</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Right Column: Completed Today (1/3 width) -->
+            <div class="lg:col-span-1">
+                <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-xl p-6 text-white sticky top-4">
+                    <h2 class="text-2xl font-bold mb-6 flex items-center">
+                        <i class="fas fa-check-circle mr-3 text-3xl"></i>Completed Today
+                    </h2>
+                    
+                    {% if completed_today %}
+                    <div class="space-y-3 max-h-96 overflow-y-auto">
+                        {% for completion in completed_today %}
+                        <div class="bg-white bg-opacity-20 rounded-xl p-4 backdrop-blur-sm">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <h4 class="font-bold text-white mb-1">{{ completion.workout.title }}</h4>
+                                    <p class="text-green-100 text-sm">
+                                        <i class="fas fa-tag mr-1"></i>{{ completion.workout.get_category_display }}
+                                    </p>
+                                    <p class="text-green-100 text-xs mt-1">
+                                        <i class="fas fa-clock mr-1"></i>{{ completion.completed_at|time:"g:i A" }}
+                                    </p>
+                                </div>
+                                <i class="fas fa-check-circle text-2xl text-green-300"></i>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-clipboard-list text-5xl text-white opacity-50 mb-4"></i>
+                        <p class="text-green-100">No workouts completed today yet.</p>
+                        <p class="text-green-200 text-sm mt-2">Start your fitness journey!</p>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mt-6 pt-6 border-t border-white border-opacity-30">
+                        <a href="{% url 'workouts:workout_today' %}" class="block w-full text-center bg-white text-green-600 py-3 rounded-xl hover:bg-green-50 transition-all duration-200 font-semibold">
+                            <i class="fas fa-redo mr-2"></i>Change Category
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

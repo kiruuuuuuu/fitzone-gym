@@ -14,5 +14,8 @@ urlpatterns = [
     path('plans/create/', views.trainer_plan_create, name='plan_create'),
     path('plans/<int:plan_id>/edit/', views.trainer_plan_edit, name='plan_edit'),
     path('plans/<int:plan_id>/assign/', views.trainer_plan_assign, name='plan_assign'),
+    
+    # Trainer Individual Workout Assignment
+    path('assign-workout/', views.trainer_assign_workout, name='assign_workout'),
 ]
 

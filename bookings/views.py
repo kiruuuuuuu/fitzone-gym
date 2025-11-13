@@ -4,74 +4,78 @@ from django.contrib import messages
 from django.utils import timezone
 from django.db import transaction
 from datetime import datetime, timedelta
-from .models import GymClass, Booking
+from .models import GymClass, Booking, ClassSchedule
 from .forms import BookingForm
 
 
 @login_required
 def book_class(request):
     """Book a class"""
-    classes = GymClass.objects.filter(is_active=True).order_by('schedule_time', 'schedule_days')
+    # Get all active classes with their upcoming schedules
+    today = timezone.now().date()
+    classes = GymClass.objects.filter(is_active=True).prefetch_related('schedules').order_by('name')
+    
+    # Filter schedules to only show upcoming ones
+    for gym_class in classes:
+        gym_class.upcoming_schedules = gym_class.schedules.filter(
+            class_date__gte=today,
+            is_active=True
+        ).order_by('class_date', 'class_time')
     
     if request.method == 'POST':
-        class_id = request.POST.get('class_id')
-        booking_date_str = request.POST.get('booking_date')
-        
-        # Validate and parse date
-        try:
-            booking_date = datetime.strptime(booking_date_str, '%Y-%m-%d').date()
-            weekday_name = booking_date.strftime('%A').lower()
-        except ValueError:
-            messages.error(request, 'Invalid date format.')
-            return redirect('bookings:book_class')
+        schedule_id = request.POST.get('schedule_id')
         
         try:
             with transaction.atomic():
-                # Lock the GymClass row until this transaction is done
-                gym_class = GymClass.objects.select_for_update().get(id=class_id, is_active=True)
-
-                # Validate weekday
-                valid_days = [day.strip().lower() for day in gym_class.schedule_days.split(',')]
-                if weekday_name not in valid_days:
-                    messages.error(request, f'{gym_class.name} is not available on a {weekday_name.title()}.')
+                # Lock the ClassSchedule row until this transaction is done
+                class_schedule = ClassSchedule.objects.select_for_update().get(
+                    id=schedule_id,
+                    is_active=True,
+                    class_date__gte=today
+                )
+                
+                gym_class = class_schedule.gym_class
+                
+                # Check if class is active
+                if not gym_class.is_active:
+                    messages.error(request, 'This class is not available for booking.')
                     return redirect('bookings:book_class')
 
                 # Re-check capacity *inside* the transaction
-                existing_bookings = Booking.objects.filter(
-                    gym_class=gym_class,
-                    booking_date=booking_date,
-                    status='confirmed'
-                ).count()
-
-                if existing_bookings >= gym_class.max_capacity:
-                    messages.error(request, 'This class is fully booked for the selected date.')
+                available_spots = class_schedule.available_spots()
+                
+                if available_spots <= 0:
+                    messages.error(request, 'This class session is fully booked.')
                     return redirect('bookings:book_class')
 
-                # Check if user already booked this class on this date
+                # Check if user already booked this schedule
                 existing_booking = Booking.objects.filter(
                     user=request.user,
-                    gym_class=gym_class,
-                    booking_date=booking_date,
+                    class_schedule=class_schedule,
                     status='confirmed'
                 ).exists()
 
                 if existing_booking:
-                    messages.error(request, 'You have already booked this class for the selected date.')
+                    messages.error(request, 'You have already booked this class session.')
                     return redirect('bookings:book_class')
 
                 # Create booking
                 booking = Booking.objects.create(
                     user=request.user,
                     gym_class=gym_class,
-                    booking_date=booking_date,
+                    class_schedule=class_schedule,
+                    booking_date=class_schedule.class_date,
                     status='confirmed'
                 )
 
-            messages.success(request, f'Successfully booked {gym_class.name}!')
+            messages.success(request, f'Successfully booked {gym_class.name} for {class_schedule.class_date}!')
             return redirect('bookings:my_bookings')
             
-        except GymClass.DoesNotExist:
-            messages.error(request, 'Class not found.')
+        except ClassSchedule.DoesNotExist:
+            messages.error(request, 'Class schedule not found or no longer available.')
+            return redirect('bookings:book_class')
+        except Exception as e:
+            messages.error(request, f'Error booking class: {str(e)}')
             return redirect('bookings:book_class')
     
     context = {
@@ -83,7 +87,7 @@ def book_class(request):
 @login_required
 def my_bookings(request):
     """View user's bookings"""
-    bookings = Booking.objects.filter(user=request.user).order_by('-booking_date', '-created_at')
+    bookings = Booking.objects.filter(user=request.user).select_related('gym_class', 'class_schedule').order_by('-booking_date', '-created_at')
     
     # Separate upcoming and past bookings
     today = timezone.now().date()

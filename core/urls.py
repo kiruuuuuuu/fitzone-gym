@@ -22,5 +22,10 @@ urlpatterns = [
     # Member pages
     path('dashboard/', views.dashboard, name='dashboard'),
     path('qr-code/', views.qr_code, name='qr_code'),
+    
+    # Personal Trainer
+    path('trainers/', views.select_trainer, name='select_trainer'),
+    path('trainers/<int:trainer_id>/subscribe/', views.subscribe_trainer, name='subscribe_trainer'),
+    path('trainers/subscription/<int:subscription_id>/cancel/', views.cancel_trainer_subscription, name='cancel_trainer_subscription'),
 ]
 

@@ -15,17 +15,74 @@
             {% csrf_token %}
             
             {% if action == 'Create' %}
-            <div class="mb-4">
-                <label for="user" class="block text-sm font-medium text-gray-700 mb-2">
-                    Select User *
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-3">
+                    User Selection *
                 </label>
-                <select id="user" name="user" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    <option value="">-- Select a user --</option>
-                    {% for user in available_users %}
-                    <option value="{{ user.id }}">{{ user.get_full_name }} ({{ user.email }})</option>
-                    {% endfor %}
-                </select>
+                <div class="flex gap-4 mb-4">
+                    <label class="flex items-center">
+                        <input type="radio" name="user_type" value="existing" checked onchange="toggleUserType()" class="mr-2">
+                        <span>Use Existing User</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="user_type" value="new" onchange="toggleUserType()" class="mr-2">
+                        <span>Create New User</span>
+                    </label>
+                </div>
+                
+                <!-- Existing User Selection -->
+                <div id="existing-user-section">
+                    <select id="user" name="user"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">-- Select a user --</option>
+                        {% for user in available_users %}
+                        <option value="{{ user.id }}">{{ user.get_full_name }} ({{ user.email }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- New User Creation -->
+                <div id="new-user-section" style="display: none;">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="username" class="block text-sm font-medium text-gray-700 mb-1">
+                                Username *
+                            </label>
+                            <input type="text" id="username" name="username"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+                                Password *
+                            </label>
+                            <input type="password" id="password" name="password"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+                                Email
+                            </label>
+                            <input type="email" id="email" name="email"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="first_name" class="block text-sm font-medium text-gray-700 mb-1">
+                                    First Name
+                                </label>
+                                <input type="text" id="first_name" name="first_name"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label for="last_name" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Last Name
+                                </label>
+                                <input type="text" id="last_name" name="last_name"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             {% else %}
             <div class="mb-4">
@@ -63,5 +120,28 @@
         </form>
     </div>
 </div>
+
+<script>
+function toggleUserType() {
+    const userType = document.querySelector('input[name="user_type"]:checked').value;
+    const existingSection = document.getElementById('existing-user-section');
+    const newSection = document.getElementById('new-user-section');
+    const userSelect = document.getElementById('user');
+    
+    if (userType === 'existing') {
+        existingSection.style.display = 'block';
+        newSection.style.display = 'none';
+        if (userSelect) userSelect.required = true;
+        document.getElementById('username').required = false;
+        document.getElementById('password').required = false;
+    } else {
+        existingSection.style.display = 'none';
+        newSection.style.display = 'block';
+        if (userSelect) userSelect.required = false;
+        document.getElementById('username').required = true;
+        document.getElementById('password').required = true;
+    }
+}
+</script>
 {% endblock %}
 

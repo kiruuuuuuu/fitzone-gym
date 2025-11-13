@@ -3,83 +3,129 @@
 {% block title %}{{ workout.title }} - FitZone Gym{% endblock %}
 
 {% block content %}
-<div class="bg-white py-16">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <a href="{% url 'workouts:library' %}" class="text-blue-600 hover:underline mb-4 inline-block">← Back to Library</a>
-        <h1 class="text-4xl font-bold mb-4">{{ workout.title }}</h1>
-        <div class="flex gap-4 mb-6 flex-wrap">
-            <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded">{{ workout.get_category_display }}</span>
-            <span class="px-3 py-1 bg-green-100 text-green-800 rounded">{{ workout.get_difficulty_level_display }}</span>
-            <span class="px-3 py-1 bg-gray-100 text-gray-800 rounded">{{ workout.duration }} minutes</span>
-            {% if workout.is_free %}
-                <span class="px-3 py-1 bg-green-100 text-green-800 rounded font-semibold">
-                    <i class="fas fa-unlock mr-1"></i>Free
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <a href="{% url 'workouts:library' %}" class="inline-flex items-center text-blue-600 hover:text-blue-800 font-semibold mb-6 transition-colors">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Library
+        </a>
+        
+        <!-- Hero Section -->
+        <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-2xl p-8 mb-8 text-white">
+            <h1 class="text-5xl font-bold mb-4">{{ workout.title }}</h1>
+            <div class="flex flex-wrap gap-3">
+                <span class="px-4 py-2 bg-white bg-opacity-20 rounded-full font-semibold backdrop-blur-sm">
+                    <i class="fas fa-tag mr-2"></i>{{ workout.get_category_display }}
                 </span>
-            {% else %}
-                <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded font-semibold">
-                    <i class="fas fa-crown mr-1"></i>Premium
+                <span class="px-4 py-2 bg-white bg-opacity-20 rounded-full font-semibold backdrop-blur-sm">
+                    <i class="fas fa-signal mr-2"></i>Level {{ workout.difficulty_level }}
                 </span>
-            {% endif %}
+                <span class="px-4 py-2 bg-white bg-opacity-20 rounded-full font-semibold backdrop-blur-sm">
+                    <i class="fas fa-layer-group mr-2"></i>{{ workout.sets }} sets
+                </span>
+                {% if workout.is_free %}
+                <span class="px-4 py-2 bg-green-400 text-green-900 rounded-full font-bold">
+                    <i class="fas fa-unlock mr-2"></i>Free
+                </span>
+                {% else %}
+                <span class="px-4 py-2 bg-yellow-400 text-yellow-900 rounded-full font-bold">
+                    <i class="fas fa-crown mr-2"></i>Premium
+                </span>
+                {% endif %}
+            </div>
         </div>
         
-        {% if not has_access and not workout.is_free %}
-        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
-            <div class="flex items-center">
-                <i class="fas fa-lock text-yellow-600 text-2xl mr-3"></i>
-                <div>
-                    <h3 class="font-semibold text-yellow-800">This workout is locked</h3>
-                    <p class="text-yellow-700">You need an active subscription with a plan that includes this workout to access it.</p>
-                    <a href="{% url 'pricing' %}" class="mt-2 inline-block bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition">
-                        <i class="fas fa-crown mr-2"></i>View Plans
+        {% if not can_view_details and not workout.is_free %}
+        <div class="bg-gradient-to-r from-yellow-50 to-orange-50 border-l-4 border-yellow-500 rounded-xl p-6 mb-8 shadow-lg">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-lock text-yellow-600 text-4xl"></i>
+                </div>
+                <div class="ml-4 flex-1">
+                    <h3 class="text-xl font-bold text-yellow-900 mb-2">This workout is locked</h3>
+                    <p class="text-yellow-800 mb-4">You need an active subscription with a plan that includes this workout to access it.</p>
+                    <a href="{% url 'pricing' %}" class="inline-block px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-600 text-white rounded-xl hover:from-yellow-700 hover:to-orange-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                        <i class="fas fa-crown mr-2"></i>View Plans & Unlock
                     </a>
                 </div>
             </div>
         </div>
         {% endif %}
         
-        {% if workout.video_url and has_access %}
-        <div class="mb-6">
-            <iframe src="{{ workout.video_url }}" class="w-full h-96 rounded-lg" frameborder="0" allowfullscreen></iframe>
+        <!-- Video Section -->
+        {% if workout.video_url and can_view_details %}
+        <div class="bg-white rounded-2xl shadow-xl p-6 mb-8">
+            {% if has_access %}
+            <div class="relative rounded-xl overflow-hidden shadow-2xl">
+                <iframe src="{{ workout.video_url }}" class="w-full h-96 md:h-[500px] rounded-xl" frameborder="0" allowfullscreen></iframe>
+            </div>
+            {% else %}
+            <div class="relative rounded-xl overflow-hidden shadow-2xl">
+                <div class="w-full h-96 md:h-[500px] bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center relative">
+                    <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                        <div class="text-center text-white p-8">
+                            <i class="fas fa-lock text-6xl mb-4 text-yellow-400"></i>
+                            <h3 class="text-2xl font-bold mb-2">Video Locked</h3>
+                            <p class="text-gray-300 mb-6">Upgrade to access this workout video</p>
+                            <a href="{% url 'pricing' %}" class="inline-block px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-600 text-white rounded-xl hover:from-yellow-700 hover:to-orange-700 transition-all duration-200 font-semibold">
+                                <i class="fas fa-unlock mr-2"></i>Unlock Now
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
-        {% elif workout.video_url and not has_access %}
-        <div class="mb-6 bg-gray-100 rounded-lg h-96 flex items-center justify-center">
-            <div class="text-center">
-                <i class="fas fa-lock text-gray-400 text-6xl mb-4"></i>
-                <p class="text-gray-600">Upgrade to view this workout video</p>
+        {% endif %}
+        
+        <!-- Description Section -->
+        {% if can_view_details %}
+        <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-info-circle text-blue-600 mr-3"></i>About This Workout
+            </h2>
+            <div class="prose max-w-none">
+                <p class="text-lg text-gray-700 leading-relaxed whitespace-pre-line">{{ workout.description }}</p>
             </div>
         </div>
         {% endif %}
         
-        <div class="prose max-w-none mb-8">
-            <p class="text-lg text-gray-700 whitespace-pre-line">{{ workout.description }}</p>
-        </div>
-        
+        <!-- Action Section -->
         {% if user.is_authenticated %}
+        <div class="bg-white rounded-2xl shadow-xl p-8">
             {% if has_access %}
                 {% if completed %}
-                    <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                        <p class="text-green-700"><i class="fas fa-check-circle mr-2"></i>You've completed this workout!</p>
-                    </div>
+                <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-6 text-center">
+                    <i class="fas fa-check-circle text-green-600 text-5xl mb-4"></i>
+                    <h3 class="text-2xl font-bold text-green-800 mb-2">Workout Completed!</h3>
+                    <p class="text-green-700">Great job! You've completed this workout today.</p>
+                </div>
                 {% else %}
-                    <form method="post" action="{% url 'workouts:mark_completed' workout.id %}">
-                        {% csrf_token %}
-                        <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition">
-                            <i class="fas fa-check mr-2"></i>Mark as Completed
-                        </button>
-                    </form>
+                <form method="post" action="{% url 'workouts:mark_completed' workout.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-bold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                        <i class="fas fa-check-circle mr-3"></i>Mark as Completed
+                    </button>
+                </form>
                 {% endif %}
             {% else %}
-                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                    <p class="text-gray-700 mb-3">You need access to mark this workout as completed.</p>
-                    <a href="{% url 'pricing' %}" class="inline-block bg-yellow-600 text-white px-6 py-2 rounded-lg hover:bg-yellow-700 transition">
-                        <i class="fas fa-crown mr-2"></i>Upgrade to Access
-                    </a>
+                <div class="bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-gray-300 rounded-xl p-6">
+                    <div class="text-center">
+                        <i class="fas fa-lock text-gray-400 text-4xl mb-4"></i>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Access Required</h3>
+                        <p class="text-gray-600 mb-6">You need access to mark this workout as completed.</p>
+                        <a href="{% url 'pricing' %}" class="inline-block px-8 py-4 bg-gradient-to-r from-yellow-600 to-orange-600 text-white rounded-xl hover:from-yellow-700 hover:to-orange-700 transition-all duration-200 font-bold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                            <i class="fas fa-crown mr-2"></i>Upgrade to Access
+                        </a>
+                    </div>
                 </div>
             {% endif %}
+        </div>
         {% else %}
-            <p class="text-gray-600">Please <a href="{% url 'login' %}" class="text-blue-600 hover:underline">login</a> to track your workout completion.</p>
+        <div class="bg-white rounded-2xl shadow-xl p-8 text-center">
+            <i class="fas fa-user-lock text-gray-400 text-4xl mb-4"></i>
+            <p class="text-gray-600 text-lg mb-4">Please <a href="{% url 'login' %}" class="text-blue-600 hover:text-blue-800 font-semibold underline">login</a> to track your workout completion.</p>
+        </div>
         {% endif %}
     </div>
 </div>
 {% endblock %}
-

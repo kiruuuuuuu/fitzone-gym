@@ -4,75 +4,97 @@
 {% block title %}Pricing - FitZone Gym{% endblock %}
 
 {% block content %}
-<div class="bg-white py-16">
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 class="text-4xl font-bold text-center mb-4">Membership Plans</h1>
-        <p class="text-center text-gray-600 mb-12">Choose the plan that's right for you</p>
+        <div class="text-center mb-12">
+            <h1 class="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+                Membership Plans
+            </h1>
+            <p class="text-gray-600 text-lg">Choose the plan that's right for you</p>
+        </div>
         
         {% if plans %}
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {% for plan in plans %}
-            <div class="border border-gray-200 rounded-lg p-8 hover:shadow-lg transition">
-                <h3 class="text-2xl font-bold mb-4"><i class="fas fa-ticket-alt mr-2"></i>{{ plan.name }}</h3>
-                <div class="mb-4">
-                    <span class="text-4xl font-bold">{{ plan.price|rupees }}</span>
-                    <span class="text-gray-600">/{{ plan.get_duration_display|lower }}</span>
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 {% if plan.is_active %}border-2 border-blue-500{% else %}border border-gray-200{% endif %}">
+                <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
+                    <h3 class="text-2xl font-bold mb-2 flex items-center">
+                        <i class="fas fa-ticket-alt mr-3"></i>{{ plan.name }}
+                    </h3>
+                    <div class="mt-4">
+                        <span class="text-4xl font-bold">{{ plan.price|rupees }}</span>
+                        <span class="text-blue-100">/{{ plan.get_duration_display|lower }}</span>
+                    </div>
                 </div>
-                <div class="mb-6 pb-4 border-b border-gray-200">
-                    <p class="text-sm text-gray-600">
-                        <i class="fas fa-calendar-alt mr-2"></i>Duration: <span class="font-semibold">{{ plan.get_duration_display }}</span>
-                    </p>
-                    {% if plan.included_workouts.count > 0 %}
-                    <p class="text-sm text-gray-600 mt-2">
-                        <i class="fas fa-dumbbell mr-2"></i>Includes <span class="font-semibold text-blue-600">{{ plan.included_workouts.count }}</span> premium workout{{ plan.included_workouts.count|pluralize }}
-                    </p>
-                    {% endif %}
-                </div>
-                <ul class="space-y-3 mb-8">
-                    {% for feature in plan.get_feature_list %}
-                        {% if feature.is_highlighted %}
-                        <li class="flex items-start bg-yellow-50 p-2 rounded border-l-4 border-yellow-400">
-                            {% if feature.icon %}
-                                <i class="fas {{ feature.icon }} text-yellow-600 mr-2 mt-0.5"></i>
-                            {% else %}
-                                <i class="fas fa-star text-yellow-600 mr-2 mt-0.5"></i>
-                            {% endif %}
-                            <span class="text-gray-800 font-semibold">{{ feature.feature_text }}</span>
-                        </li>
-                        {% else %}
-                        <li class="flex items-start">
-                            {% if feature.icon %}
-                                <i class="fas {{ feature.icon }} text-green-500 mr-2 mt-0.5"></i>
-                            {% else %}
-                                <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5"></i>
-                            {% endif %}
-                            <span class="text-gray-700">{{ feature.feature_text }}</span>
-                        </li>
+                
+                <div class="p-6">
+                    <div class="mb-6 pb-4 border-b border-gray-200">
+                        <p class="text-sm text-gray-600 mb-2 flex items-center">
+                            <i class="fas fa-calendar-alt text-blue-600 mr-2"></i>
+                            <span>Duration: <span class="font-semibold text-gray-800">{{ plan.get_duration_display }}</span></span>
+                        </p>
+                        {% if plan.included_workouts.count > 0 %}
+                        <p class="text-sm text-gray-600 mt-2 flex items-center">
+                            <i class="fas fa-dumbbell text-purple-600 mr-2"></i>
+                            <span>Includes <span class="font-semibold text-blue-600">{{ plan.included_workouts.count }}</span> premium workout{{ plan.included_workouts.count|pluralize }}</span>
+                        </p>
                         {% endif %}
-                    {% empty %}
-                        {# Fallback to old textarea features for backward compatibility #}
-                        {% for feature in plan.features.splitlines %}
-                            {% if feature.strip %}
+                    </div>
+                    
+                    <ul class="space-y-3 mb-8">
+                        {% for feature in plan.get_feature_list %}
+                            {% if feature.is_highlighted %}
+                            <li class="flex items-start bg-gradient-to-r from-yellow-50 to-orange-50 p-3 rounded-lg border-l-4 border-yellow-400">
+                                {% if feature.icon %}
+                                    <i class="fas {{ feature.icon }} text-yellow-600 mr-3 mt-0.5"></i>
+                                {% else %}
+                                    <i class="fas fa-star text-yellow-600 mr-3 mt-0.5"></i>
+                                {% endif %}
+                                <span class="text-gray-800 font-semibold">{{ feature.feature_text }}</span>
+                            </li>
+                            {% else %}
                             <li class="flex items-start">
-                                <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5"></i>
-                                <span class="text-gray-700">{{ feature }}</span>
+                                {% if feature.icon %}
+                                    <i class="fas {{ feature.icon }} text-green-500 mr-3 mt-0.5"></i>
+                                {% else %}
+                                    <i class="fas fa-check-circle text-green-500 mr-3 mt-0.5"></i>
+                                {% endif %}
+                                <span class="text-gray-700">{{ feature.feature_text }}</span>
                             </li>
                             {% endif %}
+                        {% empty %}
+                            {# Fallback to old textarea features for backward compatibility #}
+                            {% for feature in plan.features.splitlines %}
+                                {% if feature.strip %}
+                                <li class="flex items-start">
+                                    <i class="fas fa-check-circle text-green-500 mr-3 mt-0.5"></i>
+                                    <span class="text-gray-700">{{ feature }}</span>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
                         {% endfor %}
-                    {% endfor %}
-                </ul>
-                {% if user.is_authenticated %}
-                    <a href="{% url 'payments:checkout' plan.id %}" class="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition"><i class="fas fa-check mr-2"></i>Select Plan</a>
-                {% else %}
-                    <a href="{% url 'register' %}" class="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition"><i class="fas fa-user-plus mr-2"></i>Sign Up</a>
-                {% endif %}
+                    </ul>
+                    
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'payments:checkout' plan.id %}" class="block w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center py-3 px-4 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                            <i class="fas fa-check mr-2"></i>Subscribe Now
+                        </a>
+                    {% else %}
+                        <a href="{% url 'register' %}" class="block w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center py-3 px-4 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                            <i class="fas fa-user-plus mr-2"></i>Sign Up to Subscribe
+                        </a>
+                    {% endif %}
+                </div>
             </div>
             {% endfor %}
         </div>
         {% else %}
-        <p class="text-center text-gray-600">No membership plans available at this time. Please check back later.</p>
+        <div class="bg-white rounded-2xl shadow-xl p-16 text-center">
+            <i class="fas fa-ticket-alt text-6xl text-gray-400 mb-6"></i>
+            <p class="text-2xl text-gray-600 font-semibold mb-2">No membership plans available</p>
+            <p class="text-gray-500">Please check back later for new plans</p>
+        </div>
         {% endif %}
     </div>
 </div>
 {% endblock %}
-

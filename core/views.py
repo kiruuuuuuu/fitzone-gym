@@ -1,20 +1,41 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Sum
-from .models import MembershipPlan, Subscription, CustomUser, UserPoints
+from django.utils import timezone
+from .models import MembershipPlan, Subscription, CustomUser, UserPoints, Trainer, PersonalTrainerSubscription
 from .forms import RegistrationForm, ContactForm
 from bookings.models import Booking, GymClass
-from workouts.models import UserWorkoutPlan
+from workouts.models import UserWorkoutPlan, Workout
 from datetime import datetime, timedelta
 
 
 def home(request):
     """Homepage view"""
+    # Get featured workouts (mix of free and popular categories)
+    featured_workouts = Workout.objects.all().order_by('?')[:6]  # Random 6 workouts
+    
+    # Get workouts by category for quick access
+    workout_categories = Workout.CATEGORY_CHOICES[:8]  # Show first 8 categories
+    
+    # Check user access for workouts if authenticated
+    if request.user.is_authenticated:
+        from workouts.utils import user_has_access_to_workout, can_view_workout_details
+        for workout in featured_workouts:
+            workout.has_access = user_has_access_to_workout(request.user, workout)
+            workout.can_view_details = can_view_workout_details(request.user, workout)
+    else:
+        from workouts.utils import can_view_workout_details
+        for workout in featured_workouts:
+            workout.has_access = workout.is_free  # Non-authenticated users only see free workouts
+            workout.can_view_details = can_view_workout_details(request.user, workout)
+    
     context = {
         'active_members': CustomUser.objects.filter(is_active=True).count(),
         'total_classes': GymClass.objects.filter(is_active=True).count(),
+        'featured_workouts': featured_workouts,
+        'workout_categories': workout_categories,
     }
     return render(request, 'home.html', context)
 
@@ -137,6 +158,21 @@ def dashboard(request):
     # Get assigned workout plans
     assigned_plans = UserWorkoutPlan.objects.filter(user=user).select_related('plan', 'plan__trainer')
     
+    # Get personal trainer subscription
+    personal_trainer_subscription = PersonalTrainerSubscription.objects.filter(
+        user=user,
+        status='active'
+    ).select_related('trainer', 'trainer__user').first()
+    
+    # Get trainer-assigned individual workouts
+    trainer_assigned_workouts = None
+    if personal_trainer_subscription:
+        from workouts.models import TrainerAssignedWorkout
+        trainer_assigned_workouts = TrainerAssignedWorkout.objects.filter(
+            trainer=personal_trainer_subscription.trainer,
+            user=user
+        ).select_related('workout').order_by('-assigned_at')
+    
     context = {
         'subscription': subscription,
         'subscription_details': subscription_details,
@@ -144,6 +180,8 @@ def dashboard(request):
         'streak': streak,
         'total_points': total_points,
         'assigned_plans': assigned_plans,
+        'personal_trainer_subscription': personal_trainer_subscription,
+        'trainer_assigned_workouts': trainer_assigned_workouts,
     }
     return render(request, 'dashboard.html', context)
 
@@ -166,3 +204,97 @@ def custom_logout(request):
     logout(request)
     messages.success(request, 'You have been successfully logged out.')
     return redirect('home')
+
+
+@login_required
+def select_trainer(request):
+    """View to select and subscribe to a personal trainer"""
+    trainers = Trainer.objects.all().select_related('user')
+    
+    # Split specializations for each trainer
+    for trainer in trainers:
+        if trainer.specializations:
+            trainer.specializations_list = [s.strip() for s in trainer.specializations.split(',') if s.strip()]
+        else:
+            trainer.specializations_list = []
+    
+    # Get user's current active personal trainer subscription if any
+    current_subscription = PersonalTrainerSubscription.objects.filter(
+        user=request.user,
+        status='active'
+    ).first()
+    
+    # Default price for personal trainer subscription (can be made configurable)
+    trainer_price = 5000.00  # 5000 rupees per month
+    
+    context = {
+        'trainers': trainers,
+        'current_subscription': current_subscription,
+        'trainer_price': trainer_price,
+    }
+    return render(request, 'core/select_trainer.html', context)
+
+
+@login_required
+def subscribe_trainer(request, trainer_id):
+    """Subscribe to a personal trainer (payment bypassed, instant activation)"""
+    trainer = get_object_or_404(Trainer, id=trainer_id)
+    
+    # Check if user already has an active subscription with this trainer
+    existing = PersonalTrainerSubscription.objects.filter(
+        user=request.user,
+        trainer=trainer,
+        status='active'
+    ).first()
+    
+    if existing:
+        messages.info(request, f'You already have an active subscription with {trainer.user.get_full_name()}.')
+        return redirect('select_trainer')
+    
+    # Cancel any existing active subscriptions with other trainers
+    PersonalTrainerSubscription.objects.filter(
+        user=request.user,
+        status='active'
+    ).update(status='cancelled', end_date=timezone.now())
+    
+    # Default price (can be made configurable)
+    trainer_price = 5000.00
+    
+    try:
+        # Create subscription (payment bypassed - instant activation)
+        subscription = PersonalTrainerSubscription.objects.create(
+            user=request.user,
+            trainer=trainer,
+            status='active',
+            price=trainer_price,
+            start_date=timezone.now(),
+            # end_date can be set based on subscription duration (e.g., 1 month from now)
+            # For now, leaving it null for ongoing subscription
+        )
+        
+        messages.success(request, f'Successfully subscribed to {trainer.user.get_full_name()} as your personal trainer!')
+        return redirect('dashboard')
+    except Exception as e:
+        messages.error(request, f'Error subscribing to trainer: {str(e)}')
+        return redirect('select_trainer')
+
+
+@login_required
+def cancel_trainer_subscription(request, subscription_id):
+    """Cancel a personal trainer subscription"""
+    subscription = get_object_or_404(
+        PersonalTrainerSubscription,
+        id=subscription_id,
+        user=request.user
+    )
+    
+    if subscription.status == 'cancelled':
+        messages.info(request, 'This subscription is already cancelled.')
+        return redirect('dashboard')
+    
+    subscription.status = 'cancelled'
+    subscription.end_date = timezone.now()
+    subscription.save()
+    
+    messages.success(request, f'Personal trainer subscription cancelled successfully.')
+    return redirect('dashboard')

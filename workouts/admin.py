@@ -5,7 +5,7 @@ from .models import Workout, UserWorkoutCompletion
 @admin.register(Workout)
 class WorkoutAdmin(admin.ModelAdmin):
     """Admin interface for Workout"""
-    list_display = ['title', 'category', 'difficulty_level', 'duration', 'is_free', 'created_at']
+    list_display = ['title', 'category', 'difficulty_level', 'sets', 'is_free', 'created_at']
     list_filter = ['category', 'difficulty_level', 'is_free', 'created_at']
     search_fields = ['title', 'description']
     ordering = ['category', 'difficulty_level', 'title']
@@ -13,7 +13,7 @@ class WorkoutAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Workout Information', {
-            'fields': ('title', 'description', 'category', 'difficulty_level', 'duration', 'is_free')
+            'fields': ('title', 'description', 'category', 'difficulty_level', 'sets', 'is_free')
         }),
         ('Media', {
             'fields': ('video_url', 'thumbnail')

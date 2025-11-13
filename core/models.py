@@ -48,14 +48,8 @@ class MembershipPlan(models.Model):
     def __str__(self):
         return self.name
     
-    def clean(self):
-        """Validate that active plans have Stripe Price ID"""
-        if self.is_active and not self.stripe_price_id:
-            raise ValidationError({'stripe_price_id': 'An active plan must have a Stripe Price ID.'})
-    
     def save(self, *args, **kwargs):
-        """Call full_clean before saving to enforce validation"""
-        self.full_clean()
+        """Save the plan"""
         super().save(*args, **kwargs)
     
     def get_feature_list(self):
@@ -172,6 +166,34 @@ class Trainer(models.Model):
     
     def __str__(self):
         return self.user.get_full_name() or self.user.username
+
+
+class PersonalTrainerSubscription(models.Model):
+    """User subscription to a personal trainer"""
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('cancelled', 'Cancelled'),
+    ]
+    
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='personal_trainer_subscriptions')
+    trainer = models.ForeignKey(Trainer, on_delete=models.CASCADE, related_name='client_subscriptions')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    start_date = models.DateTimeField(auto_now_add=True)
+    end_date = models.DateTimeField(blank=True, null=True, help_text="Subscription end date (null for ongoing)")
+    price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Payment amount in rupees")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = [['user', 'trainer']]
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.trainer.user.get_full_name()} ({self.status})"
+    
+    @property
+    def is_active(self):
+        return self.status == 'active' and (self.end_date is None or self.end_date > timezone.now())
 
 
 class UserPoints(models.Model):

@@ -11,9 +11,9 @@ except ImportError:
 class Workout(models.Model):
     """Workout library entries"""
     DIFFICULTY_CHOICES = [
-        ('beginner', 'Beginner'),
-        ('intermediate', 'Intermediate'),
-        ('advanced', 'Advanced'),
+        ('1', 'Level 1'),
+        ('2', 'Level 2'),
+        ('3', 'Level 3'),
     ]
     
     CATEGORY_CHOICES = [
@@ -39,8 +39,8 @@ class Workout(models.Model):
     description = models.TextField()
     video_url = models.URLField(blank=True, null=True, help_text="URL to workout video or GIF")
     thumbnail = models.ImageField(upload_to='workout_thumbnails/', blank=True, null=True)
-    difficulty_level = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES, default='beginner')
-    duration = models.IntegerField(help_text="Duration in minutes")
+    difficulty_level = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES, default='1')
+    sets = models.IntegerField(help_text="Number of sets", default=1)
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
     is_free = models.BooleanField(default=False, help_text="If checked, this workout is free for all users")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -48,6 +48,10 @@ class Workout(models.Model):
     
     class Meta:
         ordering = ['category', 'difficulty_level', 'title']
+    
+    def get_difficulty_display_name(self):
+        """Get display name for difficulty level"""
+        return dict(self.DIFFICULTY_CHOICES).get(self.difficulty_level, self.difficulty_level)
     
     @property
     def is_premium(self):
@@ -120,3 +124,31 @@ class UserWorkoutPlan(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.plan.name}"
+
+
+class TrainerAssignedWorkout(models.Model):
+    """Individual workouts assigned by a trainer to a specific client"""
+    trainer = models.ForeignKey(
+        'core.Trainer',
+        on_delete=models.CASCADE,
+        related_name='assigned_workouts'
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='trainer_assigned_workouts'
+    )
+    workout = models.ForeignKey(
+        Workout,
+        on_delete=models.CASCADE,
+        related_name='trainer_assignments'
+    )
+    assigned_at = models.DateTimeField(auto_now_add=True)
+    notes = models.TextField(blank=True, help_text="Optional notes from trainer for this workout")
+
+    class Meta:
+        ordering = ['-assigned_at']
+        unique_together = [['trainer', 'user', 'workout']]
+
+    def __str__(self):
+        return f"{self.trainer.user.get_full_name()} -> {self.user.username}: {self.workout.title}"

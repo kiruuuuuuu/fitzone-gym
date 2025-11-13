@@ -5,6 +5,7 @@ app_name = 'workouts'
 
 urlpatterns = [
     path('', views.library, name='library'),
+    path('today/', views.workout_today, name='workout_today'),
     path('<int:workout_id>/', views.workout_detail, name='workout_detail'),
     path('<int:workout_id>/complete/', views.mark_completed, name='mark_completed'),
 ]
